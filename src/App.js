@@ -14,9 +14,9 @@ function App() {
         <Nav />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/path" element={<Path />} />
+          <Route path="/about" element={<About />} />
           <Route path= "/contact" element = {<Contact/>} />
           {/* Add more routes as needed */}
         </Routes>

@@ -15,7 +15,7 @@ const Home = () => {
         </section>
         
         <section className="mb-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-4">What does this web app do?</h2>
+          <h2 className="text-center text-xl md:text-2xl font-bold mb-4">What does this web app do?</h2>
           <p>
             This web application leverages the LeetCode Stats API to analyze your coding activity by
             simply entering your LeetCode username. Each LeetCode user has a distinct username, making
@@ -35,7 +35,7 @@ const Home = () => {
         </section>
 
         <section>
-          <h2 className="text-xl md:text-2xl font-bold mb-4">Get Started</h2>
+          <h2 className="text-center text-xl md:text-2xl font-bold mb-4">Get Started</h2>
           <p>
             Ready to dive into your LeetCode statistics and see how you stack up against others? Enter
             your username and start exploring your coding journey today. Together, we can make coding

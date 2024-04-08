@@ -13,13 +13,13 @@ function Nav() {
               <Link to="/" className="text-white hover:text-blue-500">Home</Link>
             </li>
             <li>
-              <Link to="/about" className="text-white hover:text-blue-500">About</Link>
-            </li>
-            <li>
               <Link to="/stats" className="text-white hover:text-blue-500">Stats</Link>
             </li>
             <li>
               <Link to="/path" className="text-white hover:text-blue-500">Path</Link>
+            </li>
+            <li>
+              <Link to="/about" className="text-white hover:text-blue-500">About</Link>
             </li>
             {/* Add more navigation links as needed */}
           </ul>

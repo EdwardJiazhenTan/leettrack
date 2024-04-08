@@ -11,6 +11,7 @@ html, body {
 body {
   background: rgb(4,77,150);
   background: linear-gradient(90deg, rgba(4,77,150,1) 4%, rgba(55,181,212,1) 100%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .navContainer {

@@ -3,7 +3,7 @@ import React from "react";
 const About = () => {
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl md:text-4xl font-bold mb-4">About LeetCode Stats App</h1>
+      <h1 className="text-center text-2xl md:text-4xl font-bold mb-4">About LeetCode Stats App</h1>
       <p className="mb-2">
         This website is a project for CSC261 at the University of Rochester. It's designed to display
         users' LeetCode statistics in a visually appealing manner, aiding in the tracking of progress
