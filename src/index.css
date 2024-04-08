@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this at the bottom or wherever you define custom styles */
+html, body {
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: rgb(4,77,150);
+  background: linear-gradient(90deg, rgba(4,77,150,1) 4%, rgba(55,181,212,1) 100%);
+}
+
+.navContainer {
+  @apply max-w-6xl mx-auto px-4;
+}
+.navLinks {
+  @apply flex justify-center items-center space-x-4;
+}
+.navLink {
+  @apply text-white hover:text-blue-500;
+}
