@@ -1,7 +1,5 @@
 # LeetCode Stats API Application
 
-## Overview
-
 ## Getting Started
 
 To run the application locally, follow the steps below:
