@@ -1,70 +1,90 @@
-# Getting Started with Create React App
+# LeetCode Stats API Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+## Getting Started
 
-In the project directory, you can run:
+To run the application locally, follow the steps below:
 
-### `npm start`
+### Frontend Setup
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. Navigate to the frontend directory:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    ```bash
+    cd frontend
+    ```
 
-### `npm test`
+2. Install the required dependencies:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    ```bash
+    npm install
+    ```
 
-### `npm run build`
+3. Start the frontend server:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    ```bash
+    npm start
+    ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend Setup
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Navigate to the backend virtual environment:
 
-### `npm run eject`
+    ```bash
+    cd backend/flask/.venv
+    ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. Make sure to configure your database connection. Update `db_connect.py` in the backend directory to connect to your own database.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. Run the backend server:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    ```bash
+    flask run
+    ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+**Important Notes:** It is not recommended to directly use the backend code. A better way to do so is to create your own virtual environment in python and modify code in .venv
 
-## Learn More
+### Database Configuration
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+To properly launch the backend, you must modify the `db_connect.py` file located in `backend/flask/.venv/`. Ensure it points to your own database connection details, including host, username, password, and database name.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Development
 
-### Code Splitting
+For development, ensure that both the frontend and backend are running simultaneously. This will allow you to see real-time updates and test the full functionality of the application.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend**: [http://localhost:5000](http://localhost:5000)
 
-### Analyzing the Bundle Size
+Happy coding!
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+The LeetCode Stats API Application is designed to help users efficiently track their progress on LeetCode by fetching real-world statistics based on their usernames. Users can view detailed stats including total problems solved, as well as breakdowns by difficulty (easy, medium, and hard). The application also offers a recommended question path tailored to enhance the user's coding proficiency and preparation for technical interviews.
 
-### Making a Progressive Web App
+Additionally, users have the ability to import their data into our proprietary database. This feature allows users to create, update, and delete their personalized review questions, making it a comprehensive tool for managing their LeetCode journey.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Features
 
-### Advanced Configuration
+- **User Stats**: Fetch and display user stats from LeetCode, including total problems solved and categorization by difficulty.
+- **Recommended Paths**: Suggests an efficient sequence of problems to solve, helping users to improve steadily.
+- **Personalized Data Management**: Users can manage their data by adding personalized notes and reviews to the questions they solve.
+  
+## Technology Stack
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- **Frontend**: React and Tailwind CSS
+- **Backend**: Flask
+- **Database**: Custom database schema designed for user data and reviews.
 
-### Deployment
+## Example
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+![Reversi AI Example](assets/example.png)
 
-### `npm run build` fails to minify
+## Credits
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+We use an external API, <https://github.com/JeremyTsaii/leetcode-stats-api.git>, to fetch real-time statistics from LeetCode based on the provided username. This allows our application to provide up-to-date information and a dynamic user experience.
+
+## Backend API
+
+Our backend API complements the external LeetCode data by providing personalized recommendations and managing user-specific data like problem reviews and notes. It handles all interactions with our own database, ensuring data consistency and security.
+
+## Database
+
+Our custom database is designed to store user profiles, their problem-solving stats, personalized reviews, and our recommended question paths. This allows for a robust, scalable way to keep user data organized and accessible
