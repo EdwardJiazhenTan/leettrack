@@ -1,88 +1,240 @@
-# LeetCode Stats API Application
+# LeetTrack
 
-## Getting Started
+A full-stack application for tracking LeetCode progress with spaced repetition learning and curated learning paths.
 
-To run the application locally, follow the steps below:
+## 🚀 Features
 
-### Frontend Setup
+### ✅ Implemented
 
-1. Navigate to the frontend directory:
+- **Authentication System**: JWT-based user registration and login
+- **Daily LeetCode Problems**: Fetches and displays daily coding challenges
+- **Direct LeetCode Integration**: GraphQL-based API integration (no external dependencies)
+- **Learning Paths**: Pre-built NeetCode 75 path with 148 problems across 18 categories
+- **Database Integration**: AWS RDS PostgreSQL with comprehensive data models
+- **Modern UI**: Terminal-themed interface with Catppuccin color scheme
+- **Caching System**: In-memory caching for optimal performance
+- **CORS Configuration**: Proper cross-origin resource sharing setup
 
-    ```bash
-    cd frontend
-    ```
+### 🎯 Core Architecture
 
-2. Install the required dependencies:
+- **Backend**: Flask with SQLAlchemy, JWT authentication, GraphQL integration
+- **Frontend**: Next.js 15 with TypeScript, modern React patterns
+- **Database**: PostgreSQL on AWS RDS with migration support
+- **API Integration**: Direct LeetCode GraphQL queries (self-hosted solution)
 
-    ```bash
-    npm install
-    ```
+## 🛠️ Tech Stack
 
-3. Start the frontend server:
+### Backend
 
-    ```bash
-    npm start
-    ```
+- **Framework**: Flask 2.3.3
+- **Database**: PostgreSQL (AWS RDS)
+- **ORM**: SQLAlchemy with Flask-SQLAlchemy
+- **Authentication**: Flask-JWT-Extended
+- **Migrations**: Flask-Migrate (Alembic)
+- **API Integration**: Custom GraphQL client for LeetCode
+- **CORS**: Flask-CORS
 
-### Backend Setup
+### Frontend
 
-1. Navigate to the backend virtual environment:
+- **Framework**: Next.js 15.3.3
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS with custom terminal theme
+- **State Management**: React Context API
+- **HTTP Client**: Native Fetch API
 
-    ```bash
-    cd backend/flask/.venv
-    ```
+### Database Schema
 
-2. Make sure to configure your database connection. Update `db_connect.py` in the backend directory to connect to your own database.
+- **Users**: Authentication and profile management
+- **Questions**: LeetCode problem metadata
+- **Learning Paths**: Curated problem collections
+- **User Progress**: Tracking and spaced repetition
+- **Review System**: Scheduled review functionality
 
-3. Run the backend server:
+## 🚀 Quick Start
 
-    ```bash
-    flask run
-    ```
+### Prerequisites
 
-**Important Notes:** It is not recommended to directly use the backend code. A better way to do so is to create your own virtual environment in python and modify code in .venv
+- Python 3.12+
+- Node.js 18+
+- PostgreSQL database (AWS RDS configured)
 
-### Database Configuration
+### Installation
 
-To properly launch the backend, you must modify the `db_connect.py` file located in `backend/flask/.venv/`. Ensure it points to your own database connection details, including host, username, password, and database name.
+1. **Clone the repository**
 
-## Development
+```bash
+git clone <repository-url>
+cd LeetTrack
+```
 
-For development, ensure that both the frontend and backend are running simultaneously. This will allow you to see real-time updates and test the full functionality of the application.
+2. **Backend Setup**
 
-- **Frontend**: [http://localhost:3000](http://localhost:3000)
-- **Backend**: [http://localhost:5000](http://localhost:5000)
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-Happy coding!
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your database credentials
 
-The LeetCode Stats API Application is designed to help users efficiently track their progress on LeetCode by fetching real-world statistics based on their usernames. Users can view detailed stats including total problems solved, as well as breakdowns by difficulty (easy, medium, and hard). The application also offers a recommended question path tailored to enhance the user's coding proficiency and preparation for technical interviews.
+# Run migrations
+flask db upgrade
+```
 
-Additionally, users have the ability to import their data into our proprietary database. This feature allows users to create, update, and delete their personalized review questions, making it a comprehensive tool for managing their LeetCode journey.
+3. **Frontend Setup**
 
-## Features
+```bash
+cd frontend
+npm install
+```
 
-- **User Stats**: Fetch and display user stats from LeetCode, including total problems solved and categorization by difficulty.
-- **Recommended Paths**: Suggests an efficient sequence of problems to solve, helping users to improve steadily.
-- **Personalized Data Management**: Users can manage their data by adding personalized notes and reviews to the questions they solve.
-  
-## Technology Stack
+4. **Start Development Servers**
 
-- **Frontend**: React and Tailwind CSS
-- **Backend**: Flask
-- **Database**: Custom database schema designed for user data and reviews.
+```bash
+# From project root
+chmod +x run_dev.sh
+./run_dev.sh
+```
 
-## Example
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
 
-![Reversi AI Example](assets/example.png)
+## 📊 Current Status
 
-## Credits
+### Database
 
-We use an external API, <https://github.com/JeremyTsaii/leetcode-stats-api.git>, to fetch real-time statistics from LeetCode based on the provided username. This allows our application to provide up-to-date information and a dynamic user experience.
+- ✅ AWS RDS PostgreSQL configured and connected
+- ✅ Complete schema with 9+ tables
+- ✅ Migration system in place
+- ✅ NeetCode 75 learning path populated (148 problems)
 
-## Backend API
+### API Endpoints
 
-Our backend API complements the external LeetCode data by providing personalized recommendations and managing user-specific data like problem reviews and notes. It handles all interactions with our own database, ensuring data consistency and security.
+- ✅ Authentication: `/api/v1/auth/*`
+- ✅ LeetCode Integration: `/api/v1/leetcode/*`
+- ✅ Learning Paths: `/api/v1/learning-paths/*`
+- ✅ User Progress: `/api/v1/user/*`
 
-## Database
+### Frontend Pages
 
-Our custom database is designed to store user profiles, their problem-solving stats, personalized reviews, and our recommended question paths. This allows for a robust, scalable way to keep user data organized and accessible
+- ✅ Home dashboard with daily problems and learning paths
+- ✅ Authentication (login/register) with terminal UI
+- ✅ Responsive design with modern styling
+
+## 📋 Todo List (Priority Order)
+
+### 🔴 High Priority
+
+1. **Admin/Manager Dashboard**
+
+   - Special login for administrators
+   - Path management interface (create, edit, delete learning paths)
+   - User monitoring and analytics dashboard
+   - System health and usage statistics
+
+2. **Social Authentication**
+
+   - Google OAuth integration
+   - GitHub OAuth integration
+   - Account linking functionality
+
+3. **Reusable Question Components**
+   - Standardized question display component
+   - Code editor integration
+   - Solution submission interface
+   - Progress tracking widgets
+
+### 🟡 Medium Priority
+
+4. **User Profile & Settings**
+
+   - Personal profile page with statistics
+   - Account settings and preferences
+   - LeetCode profile synchronization
+   - Progress visualization charts
+
+5. **Review System Enhancement**
+
+   - Question review scheduling page
+   - Spaced repetition algorithm implementation
+   - Review queue management
+   - Performance analytics
+
+6. **Review Widget**
+   - Embeddable review widget for websites
+   - Customizable appearance and behavior
+   - API for external integrations
+   - Widget configuration dashboard
+
+### 🟢 Low Priority
+
+7. **AI Integration**
+
+   - AI-powered hint system
+   - Solution explanation generation
+   - Personalized learning recommendations
+   - Code review and optimization suggestions
+
+8. **UI/UX Improvements**
+
+   - Smooth animations and transitions
+   - Advanced CSS styling
+   - Theme customization (dark/light modes)
+   - Mobile responsiveness enhancements
+   - Accessibility improvements
+
+9. **Deployment & Hosting**
+
+   - AWS EC2 backend deployment
+   - Vercel frontend deployment
+   - CI/CD pipeline setup
+   - Production environment configuration
+   - SSL certificate and domain setup
+
+10. **Documentation & Community**
+    - Comprehensive API documentation
+    - User guide and tutorials
+    - Contributing guidelines
+    - Community features (forums, discussions)
+    - Integration examples and SDKs
+
+## 🏗️ Architecture Decisions
+
+### LeetCode API Integration
+
+- **Decision**: Direct GraphQL integration instead of external API
+- **Rationale**: Eliminates rate limiting (60 req/hour), reduces dependencies
+- **Implementation**: Custom GraphQL client with caching
+
+### Authentication
+
+- **Decision**: JWT-based authentication with refresh tokens
+- **Rationale**: Stateless, scalable, secure
+- **Implementation**: Flask-JWT-Extended with 1-hour access tokens
+
+### Database Design
+
+- **Decision**: Normalized relational schema
+- **Rationale**: Data integrity, complex queries, relationship management
+- **Implementation**: SQLAlchemy ORM with migration support
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [NeetCode](https://neetcode.io/) for the curated problem sets
+- [LeetCode](https://leetcode.com/) for the problem platform
+- [Catppuccin](https://catppuccin.com/) for the beautiful color scheme
+- Open source community for the amazing tools and libraries
