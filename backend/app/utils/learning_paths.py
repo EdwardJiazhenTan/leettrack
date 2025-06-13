@@ -364,3 +364,358 @@ def create_neetcode_75_path():
     except Exception as e:
         logger.error(f"Error creating NeetCode 75 path: {str(e)}")
         raise 
+
+def create_company_paths(creator_id):
+    """Create company-specific learning paths with their key interview questions"""
+    created_paths = []
+    
+    # Amazon Path
+    amazon_path = create_learning_path(
+        name="Amazon Interview Prep - 30 Days",
+        description="Amazon's most frequently asked coding interview questions focusing on leadership principles, system design thinking, and practical problem-solving skills.",
+        difficulty_level="Intermediate",
+        estimated_hours=45,
+        tags="Amazon,Interview,System Design,Arrays,Trees,Graphs",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    amazon_questions = [
+        ("two-sum", 1, "Classic array problem, demonstrates understanding of hash maps", 20, 5),
+        ("add-two-numbers", 2, "Linked list manipulation, edge case handling", 25, 4),
+        ("longest-substring-without-repeating-characters", 3, "Sliding window technique", 30, 5),
+        ("median-of-two-sorted-arrays", 4, "Binary search on arrays", 45, 4),
+        ("merge-k-sorted-lists", 5, "Heap/priority queue usage", 40, 5),
+        ("trapping-rain-water", 6, "Two pointers, space optimization", 35, 4),
+        ("search-in-rotated-sorted-array", 7, "Modified binary search", 25, 4),
+        ("combination-sum", 8, "Backtracking fundamentals", 30, 4),
+        ("word-ladder", 9, "BFS graph traversal", 35, 4),
+        ("copy-list-with-random-pointer", 10, "Deep copy with complex pointers", 30, 4),
+        ("word-break", 11, "Dynamic programming", 25, 4),
+        ("lru-cache", 12, "Design pattern, hash map + doubly linked list", 40, 5),
+        ("number-of-islands", 13, "DFS/BFS on 2D grid", 25, 5),
+        ("meeting-rooms-ii", 14, "Interval scheduling, heap usage", 30, 5),
+        ("design-add-and-search-words-data-structure", 15, "Trie data structure", 35, 4)
+    ]
+    
+    for slug, seq, notes, minutes, importance in amazon_questions:
+        try:
+            add_question_to_path(amazon_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Amazon path: {e}")
+    
+    created_paths.append(amazon_path)
+    
+    # Meta (Facebook) Path
+    meta_path = create_learning_path(
+        name="Meta Interview Prep - 30 Days",
+        description="Meta's coding interview questions emphasizing social graph algorithms, optimization, and scalable system design patterns.",
+        difficulty_level="Intermediate",
+        estimated_hours=50,
+        tags="Meta,Facebook,Interview,Graphs,DP,Trees,Optimization",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    meta_questions = [
+        ("valid-parentheses", 1, "String processing fundamentals", 15, 5),
+        ("merge-intervals", 2, "Interval processing, sorting", 25, 5),
+        ("binary-tree-vertical-order-traversal", 3, "Tree traversal with ordering", 35, 4),
+        ("subarray-sum-equals-k", 4, "Prefix sum technique", 25, 4),
+        ("valid-palindrome", 5, "Two pointers on strings", 15, 4),
+        ("remove-invalid-parentheses", 6, "BFS for minimum changes", 40, 4),
+        ("expression-add-operators", 7, "Backtracking with evaluation", 45, 3),
+        ("sparse-matrix-multiplication", 8, "Matrix operations optimization", 30, 4),
+        ("find-all-anagrams-in-a-string", 9, "Sliding window with frequency count", 25, 4),
+        ("random-pick-with-weight", 10, "Probability and binary search", 30, 4),
+        ("minimum-remove-to-make-valid-parentheses", 11, "Greedy string processing", 20, 4),
+        ("accounts-merge", 12, "Union-Find for social connections", 35, 5),
+        ("shortest-path-in-binary-matrix", 13, "BFS shortest path", 25, 4),
+        ("design-hit-counter", 14, "Rate limiting design", 30, 5),
+        ("product-of-array-except-self", 15, "Array manipulation without division", 20, 5)
+    ]
+    
+    for slug, seq, notes, minutes, importance in meta_questions:
+        try:
+            add_question_to_path(meta_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Meta path: {e}")
+    
+    created_paths.append(meta_path)
+    
+    # Uber Path
+    uber_path = create_learning_path(
+        name="Uber Interview Prep - 30 Days",
+        description="Uber's coding interviews focusing on geolocation algorithms, real-time data processing, and ride-sharing optimization problems.",
+        difficulty_level="Intermediate",
+        estimated_hours=40,
+        tags="Uber,Interview,Geolocation,Graphs,Real-time,Optimization",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    uber_questions = [
+        ("palindromic-substrings", 1, "String DP fundamentals", 25, 4),
+        ("word-pattern", 2, "Hash map pattern matching", 20, 4),
+        ("group-anagrams", 3, "String categorization", 25, 4),
+        ("serialize-and-deserialize-binary-tree", 4, "Tree serialization", 40, 5),
+        ("evaluate-division", 5, "Graph traversal with weights", 35, 4),
+        ("course-schedule-ii", 6, "Topological sorting", 30, 4),
+        ("meeting-rooms", 7, "Interval overlap detection", 20, 5),
+        ("decode-string", 8, "Stack-based string processing", 25, 4),
+        ("shortest-distance-from-all-buildings", 9, "Multi-source BFS", 40, 4),
+        ("alien-dictionary", 10, "Topological sort on custom order", 35, 4),
+        ("design-phone-directory", 11, "Efficient number allocation", 25, 3),
+        ("reconstruct-itinerary", 12, "Eulerian path in graphs", 35, 3),
+        ("find-median-from-data-stream", 13, "Two heaps for dynamic median", 30, 5),
+        ("k-closest-points-to-origin", 14, "Heap for geographic proximity", 25, 5),
+        ("minimum-cost-to-hire-k-workers", 15, "Optimization with constraints", 40, 4)
+    ]
+    
+    for slug, seq, notes, minutes, importance in uber_questions:
+        try:
+            add_question_to_path(uber_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Uber path: {e}")
+    
+    created_paths.append(uber_path)
+    
+    logger.info(f"Created {len(created_paths)} company learning paths")
+    return created_paths
+
+def create_topic_paths(creator_id):
+    """Create topic-specific learning paths"""
+    created_paths = []
+    
+    # Binary Search Path
+    binary_search_path = create_learning_path(
+        name="Binary Search Mastery",
+        description="Comprehensive guide to binary search algorithms, from basic implementation to advanced applications in complex scenarios.",
+        difficulty_level="Intermediate",
+        estimated_hours=25,
+        tags="Binary Search,Algorithms,Search,Optimization",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    binary_search_questions = [
+        ("binary-search", 1, "Basic binary search implementation", 15, 5),
+        ("search-insert-position", 2, "Binary search with insertion point", 15, 4),
+        ("find-first-and-last-position-of-element-in-sorted-array", 3, "Finding bounds with binary search", 25, 5),
+        ("search-in-rotated-sorted-array", 4, "Modified binary search", 30, 5),
+        ("find-minimum-in-rotated-sorted-array", 5, "Finding pivot in rotated array", 25, 4),
+        ("search-a-2d-matrix", 6, "2D binary search", 20, 4),
+        ("koko-eating-bananas", 7, "Binary search on answer", 30, 4),
+        ("capacity-to-ship-packages-within-d-days", 8, "Optimization with binary search", 35, 4),
+        ("median-of-two-sorted-arrays", 9, "Advanced binary search", 45, 5),
+        ("find-k-closest-elements", 10, "Binary search with sliding window", 30, 4)
+    ]
+    
+    for slug, seq, notes, minutes, importance in binary_search_questions:
+        try:
+            add_question_to_path(binary_search_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Binary Search path: {e}")
+    
+    created_paths.append(binary_search_path)
+    
+    # Dynamic Programming Path
+    dp_path = create_learning_path(
+        name="Dynamic Programming Deep Dive",
+        description="Master dynamic programming from basic concepts to advanced optimization techniques, covering all major DP patterns.",
+        difficulty_level="Advanced",
+        estimated_hours=60,
+        tags="Dynamic Programming,DP,Optimization,Algorithms",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    dp_questions = [
+        ("climbing-stairs", 1, "Basic DP - Fibonacci pattern", 15, 5),
+        ("house-robber", 2, "1D DP with constraints", 20, 5),
+        ("coin-change", 3, "Unbounded knapsack DP", 25, 5),
+        ("longest-increasing-subsequence", 4, "LIS pattern", 30, 4),
+        ("unique-paths", 5, "2D grid DP", 20, 4),
+        ("edit-distance", 6, "String DP", 35, 5),
+        ("word-break", 7, "DP with string matching", 25, 4),
+        ("palindromic-substrings", 8, "Substring DP", 25, 4),
+        ("longest-palindromic-subsequence", 9, "Subsequence DP", 30, 4),
+        ("maximum-subarray", 10, "Kadane's algorithm", 20, 5),
+        ("best-time-to-buy-and-sell-stock", 11, "State machine DP", 20, 5),
+        ("partition-equal-subset-sum", 12, "0/1 Knapsack", 30, 4),
+        ("longest-common-subsequence", 13, "Classic 2D DP", 25, 5),
+        ("regular-expression-matching", 14, "Advanced string DP", 45, 4),
+        ("burst-balloons", 15, "Interval DP", 45, 3)
+    ]
+    
+    for slug, seq, notes, minutes, importance in dp_questions:
+        try:
+            add_question_to_path(dp_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to DP path: {e}")
+    
+    created_paths.append(dp_path)
+    
+    # Graph Algorithms Path
+    graph_path = create_learning_path(
+        name="Graph Algorithms Complete Guide",
+        description="Comprehensive coverage of graph algorithms including DFS, BFS, shortest paths, and advanced graph theory concepts.",
+        difficulty_level="Advanced",
+        estimated_hours=45,
+        tags="Graphs,DFS,BFS,Shortest Path,Algorithms",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    graph_questions = [
+        ("number-of-islands", 1, "Basic DFS on 2D grid", 25, 5),
+        ("clone-graph", 2, "Graph cloning with DFS/BFS", 25, 4),
+        ("course-schedule", 3, "Cycle detection with DFS", 30, 5),
+        ("course-schedule-ii", 4, "Topological sorting", 30, 5),
+        ("pacific-atlantic-water-flow", 5, "Multi-source DFS", 35, 4),
+        ("word-ladder", 6, "BFS shortest path", 35, 4),
+        ("network-delay-time", 7, "Dijkstra's algorithm", 35, 4),
+        ("cheapest-flights-within-k-stops", 8, "Modified Dijkstra with constraints", 40, 4),
+        ("alien-dictionary", 9, "Topological sort with custom ordering", 35, 4),
+        ("minimum-spanning-tree", 10, "MST algorithms", 40, 3),
+        ("critical-connections-in-a-network", 11, "Tarjan's bridge-finding", 45, 3),
+        ("accounts-merge", 12, "Union-Find for connected components", 35, 4),
+        ("graph-valid-tree", 13, "Tree validation in graphs", 25, 4),
+        ("shortest-path-in-binary-matrix", 14, "BFS with obstacles", 25, 4),
+        ("reconstruct-itinerary", 15, "Eulerian path", 35, 3)
+    ]
+    
+    for slug, seq, notes, minutes, importance in graph_questions:
+        try:
+            add_question_to_path(graph_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Graph path: {e}")
+    
+    created_paths.append(graph_path)
+    
+    logger.info(f"Created {len(created_paths)} topic learning paths")
+    return created_paths
+
+def create_pattern_paths(creator_id):
+    """Create pattern-based learning paths"""
+    created_paths = []
+    
+    # LeetCode 101 Path
+    leetcode_101_path = create_learning_path(
+        name="LeetCode 101 - Algorithm Patterns",
+        description="Based on the comprehensive LeetCode 101 guide, covering fundamental algorithm patterns and problem-solving techniques systematically.",
+        difficulty_level="Beginner",
+        estimated_hours=80,
+        tags="LeetCode 101,Patterns,Fundamentals,Comprehensive",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    leetcode_101_questions = [
+        # Greedy Algorithm
+        ("assign-cookies", 1, "Greedy - Basic assignment problem", 15, 4),
+        ("non-overlapping-intervals", 2, "Greedy - Interval scheduling", 25, 4),
+        ("minimum-number-of-arrows-to-burst-balloons", 3, "Greedy - Interval merging", 25, 4),
+        
+        # Binary Search
+        ("binary-search", 4, "Binary Search - Template implementation", 15, 5),
+        ("find-first-and-last-position-of-element-in-sorted-array", 5, "Binary Search - Finding bounds", 25, 4),
+        ("search-in-rotated-sorted-array", 6, "Binary Search - Rotated array", 30, 4),
+        
+        # Sort
+        ("merge-intervals", 7, "Sorting - Interval merging", 25, 4),
+        ("largest-number", 8, "Sorting - Custom comparator", 30, 3),
+        
+        # Dynamic Programming
+        ("climbing-stairs", 9, "DP - Basic recursion to DP", 15, 5),
+        ("triangle", 10, "DP - Path sum optimization", 20, 4),
+        ("maximum-subarray", 11, "DP - Kadane's algorithm", 20, 5),
+        ("house-robber", 12, "DP - Linear DP with constraints", 20, 4),
+        ("coin-change", 13, "DP - Unbounded knapsack", 25, 5),
+        ("word-break", 14, "DP - String partitioning", 25, 4),
+        ("combination-sum-iv", 15, "DP - Counting combinations", 25, 4),
+        ("house-robber-ii", 16, "DP - Circular array", 25, 4),
+        ("best-time-to-buy-and-sell-stock", 17, "DP - State machine", 20, 5),
+        ("longest-increasing-subsequence", 18, "DP - LIS pattern", 30, 4),
+        ("partition-equal-subset-sum", 19, "DP - 0/1 knapsack", 30, 4),
+        
+        # Divide and Conquer
+        ("maximum-subarray", 20, "D&C - Alternative to DP approach", 25, 3),
+        ("majority-element", 21, "D&C - Boyer-Moore algorithm", 20, 4),
+        
+        # Search (DFS/BFS)
+        ("max-area-of-island", 22, "DFS - 2D grid traversal", 25, 4),
+        ("find-all-anagrams-in-a-string", 23, "Sliding window - Pattern matching", 25, 4),
+        ("pacific-atlantic-water-flow", 24, "DFS - Multi-source exploration", 35, 4)
+    ]
+    
+    for slug, seq, notes, minutes, importance in leetcode_101_questions:
+        try:
+            add_question_to_path(leetcode_101_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to LeetCode 101 path: {e}")
+    
+    created_paths.append(leetcode_101_path)
+    
+    # Grokking Coding Interview Path
+    grokking_path = create_learning_path(
+        name="Grokking the Coding Interview Patterns",
+        description="Systematic approach to coding interviews using pattern recognition. Master the 14 most important coding patterns for technical interviews.",
+        difficulty_level="Intermediate",
+        estimated_hours=70,
+        tags="Grokking,Patterns,Interview,Systematic",
+        source="System",
+        creator_id=creator_id,
+        is_public=True
+    )
+    
+    grokking_questions = [
+        # Pattern 1: Sliding Window
+        ("maximum-sum-subarray-of-size-k", 1, "Sliding Window - Fixed size", 20, 4),
+        ("smallest-subarray-with-given-sum", 2, "Sliding Window - Variable size", 25, 4),
+        ("longest-substring-with-k-distinct-characters", 3, "Sliding Window - K distinct", 30, 4),
+        ("fruits-into-baskets", 4, "Sliding Window - At most 2 types", 25, 4),
+        ("longest-substring-without-repeating-characters", 5, "Sliding Window - No repeats", 25, 5),
+        
+        # Pattern 2: Two Pointers
+        ("pair-with-target-sum", 6, "Two Pointers - Target sum", 15, 5),
+        ("remove-duplicates", 7, "Two Pointers - In-place removal", 15, 4),
+        ("squaring-a-sorted-array", 8, "Two Pointers - Merge technique", 20, 4),
+        ("triplet-sum-to-zero", 9, "Two Pointers - 3Sum", 30, 5),
+        ("triplet-sum-close-to-target", 10, "Two Pointers - Closest sum", 25, 4),
+        
+        # Pattern 3: Fast & Slow Pointers
+        ("linkedlist-cycle", 11, "Fast Slow - Cycle detection", 20, 5),
+        ("start-of-linkedlist-cycle", 12, "Fast Slow - Cycle start", 25, 4),
+        ("happy-number", 13, "Fast Slow - Number cycle", 20, 4),
+        ("middle-of-the-linkedlist", 14, "Fast Slow - Middle finding", 15, 4),
+        
+        # Pattern 4: Merge Intervals
+        ("merge-intervals", 15, "Merge Intervals - Basic merging", 25, 5),
+        ("insert-interval", 16, "Merge Intervals - Insert and merge", 25, 4),
+        ("intervals-intersection", 17, "Merge Intervals - Intersection", 25, 4),
+        ("conflicting-appointments", 18, "Merge Intervals - Conflict detection", 20, 4),
+        
+        # Pattern 5: Cyclic Sort
+        ("cyclic-sort", 19, "Cyclic Sort - Basic implementation", 20, 4),
+        ("find-the-missing-number", 20, "Cyclic Sort - Missing number", 15, 4),
+        ("find-all-missing-numbers", 21, "Cyclic Sort - All missing", 20, 4)
+    ]
+    
+    for slug, seq, notes, minutes, importance in grokking_questions:
+        try:
+            add_question_to_path(grokking_path.path_id, slug, seq, notes, minutes, importance)
+        except Exception as e:
+            logger.error(f"Failed to add {slug} to Grokking path: {e}")
+    
+    created_paths.append(grokking_path)
+    
+    logger.info(f"Created {len(created_paths)} pattern learning paths")
+    return created_paths 

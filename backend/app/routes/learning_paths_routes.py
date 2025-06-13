@@ -13,10 +13,14 @@ from app.models.user_learning_path import UserLearningPath
 from app.utils.learning_paths import (
     create_learning_path, 
     add_question_to_path, 
-    get_learning_path_with_questions
+    get_learning_path_with_questions,
+    create_company_paths,
+    create_topic_paths,
+    create_pattern_paths
 )
 from app.utils.security import admin_required
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -239,9 +243,9 @@ def get_user_learning_paths():
                 'estimated_hours': path.estimated_hours,
                 'tags': path.tags.split(',') if path.tags else [],
                 'question_count': total_questions,
-                'enrolled_at': user_path.enrolled_at.isoformat() if user_path.enrolled_at else None,
-                'progress_percentage': user_path.progress_percentage or 0,
-                'is_completed': user_path.is_completed or False
+                'enrolled_at': user_path.started_at.isoformat() if user_path.started_at else None,
+                'progress_percentage': user_path.completion_percentage or 0,
+                'is_completed': user_path.completed_at is not None
             })
         
         return jsonify({
@@ -284,13 +288,12 @@ def enroll_in_learning_path(path_id):
             }), 400
         
         # Create enrollment
-        from datetime import datetime
         enrollment = UserLearningPath(
             user_id=current_user_id,
             path_id=path_id,
-            enrolled_at=datetime.utcnow(),
-            progress_percentage=0,
-            is_completed=False
+            started_at=datetime.utcnow(),
+            completion_percentage=0.0,
+            is_active=True
         )
         
         db.session.add(enrollment)
@@ -358,4 +361,376 @@ def admin_create_learning_path():
         return jsonify({
             'status': 'error',
             'message': 'Failed to create learning path'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths', methods=['GET'])
+@admin_required
+def admin_get_all_learning_paths():
+    """Admin: Get all learning paths including inactive ones"""
+    try:
+        paths = LearningPath.query.all()
+        
+        paths_data = []
+        for path in paths:
+            question_count = PathQuestion.query.filter_by(path_id=path.path_id).count()
+            enrollment_count = db.session.query(UserLearningPath).filter_by(path_id=path.path_id).count()
+            
+            paths_data.append({
+                'path_id': path.path_id,
+                'name': path.name,
+                'description': path.description,
+                'difficulty_level': path.difficulty_level,
+                'estimated_hours': path.estimated_hours,
+                'tags': path.tags.split(',') if path.tags else [],
+                'question_count': question_count,
+                'enrollment_count': enrollment_count,
+                'created_at': path.created_at.isoformat() if path.created_at else None,
+                'updated_at': path.updated_at.isoformat() if path.updated_at else None,
+                'source': path.source,
+                'is_public': path.is_public,
+                'is_active': path.is_active,
+                'creator_id': path.creator_id
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'data': paths_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"[ADMIN] Error getting all learning paths: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to retrieve learning paths'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>', methods=['PUT'])
+@admin_required
+def admin_update_learning_path(path_id):
+    """Admin: Update a learning path"""
+    try:
+        path = LearningPath.query.get(path_id)
+        if not path:
+            return jsonify({
+                'status': 'error',
+                'message': 'Learning path not found'
+            }), 404
+
+        data = request.get_json()
+        
+        # Update fields if provided
+        if 'name' in data:
+            path.name = data['name']
+        if 'description' in data:
+            path.description = data['description']
+        if 'difficulty_level' in data:
+            path.difficulty_level = data['difficulty_level']
+        if 'estimated_hours' in data:
+            path.estimated_hours = data['estimated_hours']
+        if 'tags' in data:
+            path.tags = ','.join(data['tags']) if isinstance(data['tags'], list) else data['tags']
+        if 'is_public' in data:
+            path.is_public = data['is_public']
+        if 'is_active' in data:
+            path.is_active = data['is_active']
+        
+        path.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Learning path updated successfully',
+            'data': {
+                'path_id': path.path_id,
+                'name': path.name,
+                'description': path.description,
+                'is_public': path.is_public,
+                'is_active': path.is_active
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"[ADMIN] Error updating learning path {path_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to update learning path'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_learning_path(path_id):
+    """Admin: Delete a learning path (or deactivate if it has enrollments)"""
+    try:
+        path = LearningPath.query.get(path_id)
+        if not path:
+            return jsonify({
+                'status': 'error',
+                'message': 'Learning path not found'
+            }), 404
+
+        # Check if path has enrollments
+        enrollment_count = db.session.query(UserLearningPath).filter_by(path_id=path_id).count()
+        
+        if enrollment_count > 0:
+            # Deactivate instead of delete
+            path.is_active = False
+            path.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            return jsonify({
+                'status': 'success',
+                'message': f'Learning path deactivated (had {enrollment_count} enrollments)'
+            }), 200
+        else:
+            # Safe to delete
+            db.session.delete(path)
+            db.session.commit()
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Learning path deleted successfully'
+            }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"[ADMIN] Error deleting learning path {path_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to delete learning path'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>/questions', methods=['POST'])
+@admin_required
+def admin_add_question_to_path(path_id):
+    """Admin: Add a question to a learning path"""
+    try:
+        path = LearningPath.query.get(path_id)
+        if not path:
+            return jsonify({
+                'status': 'error',
+                'message': 'Learning path not found'
+            }), 404
+
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['question_title_slug', 'sequence_number']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+
+        # Add the question
+        path_question = add_question_to_path(
+            path_id=path_id,
+            question_title_slug=data['question_title_slug'],
+            sequence_number=data['sequence_number'],
+            notes=data.get('notes'),
+            estimated_minutes=data.get('estimated_minutes'),
+            importance=data.get('importance', 3)
+        )
+
+        if not path_question:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to add question to path'
+            }), 500
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Question added to learning path successfully',
+            'data': {
+                'path_question_id': path_question.path_question_id,
+                'sequence_number': path_question.sequence_number
+            }
+        }), 201
+
+    except Exception as e:
+        logger.error(f"[ADMIN] Error adding question to path {path_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to add question to learning path'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>/questions/<int:path_question_id>', methods=['PUT'])
+@admin_required
+def admin_update_path_question(path_id, path_question_id):
+    """Admin: Update a question in a learning path"""
+    try:
+        path_question = PathQuestion.query.filter_by(
+            path_question_id=path_question_id,
+            path_id=path_id
+        ).first()
+        
+        if not path_question:
+            return jsonify({
+                'status': 'error',
+                'message': 'Path question not found'
+            }), 404
+
+        data = request.get_json()
+        
+        # Update fields if provided
+        if 'sequence_number' in data:
+            # Check for conflicts
+            existing = PathQuestion.query.filter_by(
+                path_id=path_id,
+                sequence_number=data['sequence_number']
+            ).filter(PathQuestion.path_question_id != path_question_id).first()
+            
+            if existing:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Sequence number {data["sequence_number"]} already exists'
+                }), 400
+            
+            path_question.sequence_number = data['sequence_number']
+        
+        if 'notes' in data:
+            path_question.notes = data['notes']
+        if 'estimated_minutes' in data:
+            path_question.estimated_minutes = data['estimated_minutes']
+        if 'importance' in data:
+            path_question.importance = data['importance']
+        
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Path question updated successfully'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"[ADMIN] Error updating path question {path_question_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to update path question'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>/questions/<int:path_question_id>', methods=['DELETE'])
+@admin_required
+def admin_remove_question_from_path(path_id, path_question_id):
+    """Admin: Remove a question from a learning path"""
+    try:
+        path_question = PathQuestion.query.filter_by(
+            path_question_id=path_question_id,
+            path_id=path_id
+        ).first()
+        
+        if not path_question:
+            return jsonify({
+                'status': 'error',
+                'message': 'Path question not found'
+            }), 404
+
+        db.session.delete(path_question)
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Question removed from learning path successfully'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"[ADMIN] Error removing question from path {path_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to remove question from path'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/<int:path_id>/questions/reorder', methods=['PUT'])
+@admin_required
+def admin_reorder_path_questions(path_id):
+    """Admin: Reorder questions in a learning path"""
+    try:
+        path = LearningPath.query.get(path_id)
+        if not path:
+            return jsonify({
+                'status': 'error',
+                'message': 'Learning path not found'
+            }), 404
+
+        data = request.get_json()
+        if 'question_orders' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing question_orders field'
+            }), 400
+
+        # question_orders should be: [{'path_question_id': 1, 'sequence_number': 1}, ...]
+        question_orders = data['question_orders']
+        
+        for order in question_orders:
+            path_question = PathQuestion.query.filter_by(
+                path_question_id=order['path_question_id'],
+                path_id=path_id
+            ).first()
+            
+            if path_question:
+                path_question.sequence_number = order['sequence_number']
+        
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Questions reordered successfully'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"[ADMIN] Error reordering questions in path {path_id}: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to reorder questions'
+        }), 500
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths/bulk-create', methods=['POST'])
+@admin_required
+def admin_bulk_create_paths():
+    """Admin: Bulk create predefined learning paths"""
+    try:
+        data = request.get_json()
+        path_type = data.get('path_type')
+        
+        if path_type not in ['company', 'topic', 'pattern']:
+            return jsonify({
+                'status': 'error',
+                'message': 'Invalid path_type. Must be: company, topic, or pattern'
+            }), 400
+
+        current_user_id = int(get_jwt_identity())
+        created_paths = []
+
+        if path_type == 'company':
+            created_paths = create_company_paths(current_user_id)
+        elif path_type == 'topic':
+            created_paths = create_topic_paths(current_user_id)
+        elif path_type == 'pattern':
+            created_paths = create_pattern_paths(current_user_id)
+
+        return jsonify({
+            'status': 'success',
+            'message': f'Created {len(created_paths)} {path_type} learning paths',
+            'data': {
+                'created_paths': [
+                    {
+                        'path_id': path.path_id,
+                        'name': path.name,
+                        'description': path.description
+                    }
+                    for path in created_paths
+                ]
+            }
+        }), 201
+
+    except Exception as e:
+        logger.error(f"[ADMIN] Error bulk creating paths: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to bulk create learning paths'
         }), 500 

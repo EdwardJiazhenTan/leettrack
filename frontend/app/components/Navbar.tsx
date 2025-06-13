@@ -27,6 +27,12 @@ export default function Navbar() {
                   &gt; {user.leetcode_username}
                 </span>
                 <Link
+                  href="/today"
+                  className="bg-[#89b4fa] hover:bg-[#74c7ec] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#89b4fa] hover:border-[#74c7ec] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
+                >
+                  [TODAY]
+                </Link>
+                <Link
                   href="/profile"
                   className="bg-[#a6e3a1] hover:bg-[#94e2d5] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#a6e3a1] hover:border-[#94e2d5] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
                 >

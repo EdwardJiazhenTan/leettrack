@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import StatsOverview from "../components/charts/StatsOverview";
 import DifficultyChart from "../components/charts/DifficultyChart";
 import LanguageChart from "../components/charts/LanguageChart";
 import RecentSubmissions from "../components/charts/RecentSubmissions";
+import ReviewRating from "../components/ReviewRating";
+import DashboardSummary from "../components/DashboardSummary";
+import UserSettings from "../components/UserSettings";
 
 interface ProfileStats {
   status: string;
@@ -53,14 +56,58 @@ interface ProfileStats {
   };
 }
 
+interface Question {
+  user_question_id: number;
+  question_id: number;
+  title: string;
+  url: string;
+  difficulty: string;
+  solved_at: string;
+  times_reviewed: number;
+}
+
+interface ConfidenceLevel {
+  value: string;
+  label: string;
+  description: string;
+  color: string;
+  intervals: number[];
+}
+
+interface RatingData {
+  questions: Question[];
+  confidence_levels: ConfidenceLevel[];
+}
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<ProfileStats | null>(null);
+  const [ratingData, setRatingData] = useState<RatingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ratingLoading, setRatingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("stats");
+
+  // Toggle states for expandable sections
+  const [showLanguageStats, setShowLanguageStats] = useState(false);
+  const [showRecentSubmissions, setShowRecentSubmissions] = useState(false);
+
+  // Get active tab from URL params
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
+    // Don't redirect if auth is still loading
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       router.push("/login");
       return;
@@ -109,7 +156,125 @@ export default function ProfilePage() {
     };
 
     fetchStats();
-  }, [user, router]);
+  }, [user, authLoading, router]);
+
+  const fetchRatingData = async () => {
+    if (ratingData) return; // Already loaded
+
+    try {
+      setRatingLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await fetch(
+        "http://localhost:5000/api/v1/auth/user/questions/need-rating",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch rating data");
+      }
+
+      const result = await response.json();
+      if (result.status === "success") {
+        setRatingData(result.data);
+      }
+    } catch (err) {
+      console.error("Error fetching rating data:", err);
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
+  const handleRateQuestion = async (
+    userQuestionId: number,
+    confidence: string,
+    notes?: string
+  ) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      const response = await fetch(
+        `http://localhost:5000/api/v1/auth/user/questions/${userQuestionId}/rate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ confidence, notes }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to rate question");
+      }
+
+      const result = await response.json();
+      if (result.status === "success") {
+        // Remove the rated question from the list
+        setRatingData((prev) =>
+          prev
+            ? {
+                ...prev,
+                questions: prev.questions.filter(
+                  (q) => q.user_question_id !== userQuestionId
+                ),
+              }
+            : null
+        );
+      }
+    } catch (err) {
+      console.error("Error rating question:", err);
+      throw err;
+    }
+  };
+
+  const handleUsernameUpdate = (newUsername: string) => {
+    // Update the stats state to reflect the new username
+    if (stats) {
+      setStats({
+        ...stats,
+        username: newUsername,
+      });
+    }
+  };
+
+  // Tab configuration
+  const tabs = [
+    { id: "stats", label: "Statistics", icon: "📊" },
+    {
+      id: "rating",
+      label: "Rate Questions",
+      icon: "📝",
+      badge: ratingData?.questions.length || 0,
+    },
+    { id: "settings", label: "Settings", icon: "⚙️" },
+  ];
+
+  // Handle auth loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#1e1e2e]">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="bg-[#313244] border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
+              <p className="text-xl font-mono text-[#cdd6f4] tracking-wider">
+                [AUTHENTICATING...]
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
@@ -117,31 +282,16 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          backgroundColor: "#1e1e2e",
-          fontFamily: "monospace",
-          backgroundImage: `
-            radial-gradient(circle at 25% 25%, #313244 0%, transparent 50%),
-            radial-gradient(circle at 75% 75%, #45475a 0%, transparent 50%)
-          `,
-        }}
-      >
-        <div
-          className="p-8"
-          style={{
-            backgroundColor: "#313244",
-            border: "4px solid #45475a",
-            boxShadow: "8px 8px 0px #11111b",
-          }}
-        >
-          <p
-            className="text-xl font-mono font-bold tracking-wider"
-            style={{ color: "#cdd6f4" }}
-          >
-            {">"} [LOADING_PROFILE_DATA...]
-          </p>
+      <div className="min-h-screen bg-[#1e1e2e]">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="bg-[#313244] border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
+              <p className="text-xl font-mono text-[#cdd6f4] tracking-wider">
+                [LOADING_PROFILE_DATA...]
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -149,59 +299,24 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{
-          backgroundColor: "#1e1e2e",
-          fontFamily: "monospace",
-          backgroundImage: `
-            radial-gradient(circle at 25% 25%, #313244 0%, transparent 50%),
-            radial-gradient(circle at 75% 75%, #45475a 0%, transparent 50%)
-          `,
-        }}
-      >
-        <div
-          className="max-w-md mx-auto p-8 space-y-6"
-          style={{
-            backgroundColor: "#181825",
-            border: "4px solid #f38ba8",
-            boxShadow: "8px 8px 0px #11111b",
-          }}
-        >
-          <div className="text-center space-y-4">
-            <div className="text-6xl font-mono" style={{ color: "#f38ba8" }}>
-              [ERROR]
+      <div className="min-h-screen bg-[#1e1e2e]">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="bg-[#313244] border-4 border-[#f38ba8] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
+              <div className="text-6xl mb-4 text-[#f38ba8]">[ERROR]</div>
+              <h2 className="text-2xl font-mono font-bold text-[#f38ba8] tracking-wider mb-4">
+                SYSTEM_FAILURE_DETECTED
+              </h2>
+              <p className="font-mono text-sm text-[#cdd6f4] mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-[#a6e3a1] text-[#1e1e2e] font-mono font-bold border-4 border-[#a6e3a1] hover:bg-[#94e2d5] hover:border-[#94e2d5] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+              >
+                [RETRY_CONNECTION]
+              </button>
             </div>
-            <h2
-              className="text-2xl font-mono font-bold tracking-wider"
-              style={{ color: "#f38ba8" }}
-            >
-              {">"} SYSTEM_FAILURE_DETECTED
-            </h2>
-            <p className="font-mono text-sm" style={{ color: "#cdd6f4" }}>
-              {error}
-            </p>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full p-4 font-mono font-bold text-sm tracking-wider transition-all duration-200 focus:outline-none"
-            style={{
-              backgroundColor: "#a6e3a1",
-              color: "#1e1e2e",
-              border: "3px solid #a6e3a1",
-              boxShadow: "6px 6px 0px #11111b",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translate(-2px, -2px)";
-              e.currentTarget.style.boxShadow = "8px 8px 0px #11111b";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translate(0px, 0px)";
-              e.currentTarget.style.boxShadow = "6px 6px 0px #11111b";
-            }}
-          >
-            {">"} [RETRY_CONNECTION]
-          </button>
         </div>
       </div>
     );
@@ -209,195 +324,241 @@ export default function ProfilePage() {
 
   if (!stats) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          backgroundColor: "#1e1e2e",
-          fontFamily: "monospace",
-        }}
-      >
-        <div
-          className="p-8"
-          style={{
-            backgroundColor: "#313244",
-            border: "4px solid #6c7086",
-            boxShadow: "8px 8px 0px #11111b",
-          }}
-        >
-          <p className="font-mono tracking-wider" style={{ color: "#6c7086" }}>
-            {">"} [NO_DATA_AVAILABLE]
-          </p>
+      <div className="min-h-screen bg-[#1e1e2e]">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="bg-[#313244] border-4 border-[#6c7086] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
+              <p className="font-mono text-[#6c7086] tracking-wider">
+                [NO_DATA_AVAILABLE]
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: "#1e1e2e",
-        fontFamily: "monospace",
-      }}
-    >
+    <div className="min-h-screen bg-[#1e1e2e]">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div
-            className="mb-6 p-6"
-            style={{
-              backgroundColor: "#313244",
-              border: "4px solid #89b4fa",
-              boxShadow: "4px 4px 0px #11111b",
-            }}
-          >
+          <div className="mb-6 bg-[#313244] border-4 border-[#89b4fa] p-6 shadow-[4px_4px_0px_0px_#11111b]">
             <div className="flex items-center gap-4">
-              <div
-                className="w-16 h-16 flex items-center justify-center border-4"
-                style={{
-                  backgroundColor: "#181825",
-                  borderColor: "#45475a",
-                  boxShadow: "4px 4px 0px #11111b",
-                }}
-              >
+              <div className="w-16 h-16 flex items-center justify-center bg-[#181825] border-4 border-[#45475a] shadow-[4px_4px_0px_0px_#11111b]">
                 <span className="text-2xl">👨‍💻</span>
               </div>
               <div>
-                <h1
-                  className="text-3xl font-mono font-bold tracking-wider"
-                  style={{ color: "#cdd6f4" }}
-                >
-                  {">"} [USER_PROFILE_TERMINAL]
+                <h1 className="text-3xl font-mono font-bold text-[#cdd6f4] tracking-wider">
+                  [USER_PROFILE_TERMINAL]
                 </h1>
-                <p
-                  className="font-mono text-sm tracking-wide"
-                  style={{ color: "#6c7086" }}
-                >
+                <p className="font-mono text-sm text-[#6c7086] tracking-wide">
                   user.email:{" "}
-                  <span style={{ color: "#89b4fa" }}>{user.email}</span>
+                  <span className="text-[#89b4fa]">{user.email}</span>
                 </p>
-                <p
-                  className="font-mono text-sm tracking-wide"
-                  style={{ color: "#6c7086" }}
-                >
+                <p className="font-mono text-sm text-[#6c7086] tracking-wide">
                   leetcode.username:{" "}
-                  <span style={{ color: "#a6e3a1" }}>{stats.username}</span>
+                  <span className="text-[#a6e3a1]">{stats.username}</span>
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Local Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div
-              className="p-4"
-              style={{
-                backgroundColor: "#313244",
-                border: "4px solid #a6e3a1",
-                boxShadow: "4px 4px 0px #11111b",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">📝</span>
-                <div>
-                  <div
-                    className="text-2xl font-mono font-bold"
-                    style={{ color: "#a6e3a1" }}
+          {/* Tabs */}
+          <div className="mb-6">
+            <div className="bg-[#313244] border-4 border-[#45475a] p-2 shadow-[4px_4px_0px_0px_#11111b]">
+              <div className="flex gap-2">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      if (tab.id === "rating") {
+                        fetchRatingData();
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 font-mono font-bold tracking-wide transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? "bg-[#a6e3a1] text-[#1e1e2e] border-2 border-[#a6e3a1]"
+                        : "text-[#cdd6f4] hover:text-[#a6e3a1] border-2 border-transparent"
+                    }`}
                   >
-                    {stats.localStats.tracked_questions}
-                  </div>
-                  <div
-                    className="text-xs font-mono tracking-wide"
-                    style={{ color: "#6c7086" }}
-                  >
-                    {">"} [TRACKED_QUESTIONS]
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="p-4"
-              style={{
-                backgroundColor: "#313244",
-                border: "4px solid #89b4fa",
-                boxShadow: "4px 4px 0px #11111b",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🛤️</span>
-                <div>
-                  <div
-                    className="text-2xl font-mono font-bold"
-                    style={{ color: "#89b4fa" }}
-                  >
-                    {stats.localStats.enrolled_paths}
-                  </div>
-                  <div
-                    className="text-xs font-mono tracking-wide"
-                    style={{ color: "#6c7086" }}
-                  >
-                    {">"} [ENROLLED_PATHS]
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="p-4"
-              style={{
-                backgroundColor: "#313244",
-                border: "4px solid #f9e2af",
-                boxShadow: "4px 4px 0px #11111b",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">✅</span>
-                <div>
-                  <div
-                    className="text-2xl font-mono font-bold"
-                    style={{ color: "#f9e2af" }}
-                  >
-                    {stats.localStats.completed_paths}
-                  </div>
-                  <div
-                    className="text-xs font-mono tracking-wide"
-                    style={{ color: "#6c7086" }}
-                  >
-                    {">"} [COMPLETED_PATHS]
-                  </div>
-                </div>
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    {tab.badge && tab.badge > 0 && (
+                      <span className="bg-[#f38ba8] text-[#1e1e2e] text-xs px-2 py-1 font-mono font-bold tracking-wider shadow-[2px_2px_0px_0px_#11111b]">
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Stats Overview */}
-          <div className="xl:col-span-2">
-            <StatsOverview stats={stats.leetcodeStats.solvingStats} />
-          </div>
+        {/* Tab Content */}
+        {activeTab === "stats" && (
+          <div className="space-y-8">
+            {/* Today's Study Plan */}
+            <DashboardSummary />
 
-          {/* Difficulty Chart */}
+            {/* Primary Stats - Stats Overview and Difficulty Breakdown */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* Stats Overview */}
+              <div>
+                <StatsOverview stats={stats.leetcodeStats.solvingStats} />
+              </div>
+
+              {/* Difficulty Chart */}
+              <div>
+                <DifficultyChart
+                  stats={stats.leetcodeStats.difficultyProgress}
+                />
+              </div>
+            </div>
+
+            {/* Toggleable Sections */}
+            <div className="space-y-4">
+              {/* Language Statistics Toggle */}
+              <div className="bg-[#313244] border-4 border-[#cba6f7] shadow-[4px_4px_0px_0px_#11111b]">
+                <button
+                  onClick={() => setShowLanguageStats(!showLanguageStats)}
+                  className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">💻</span>
+                      <h3 className="text-xl font-mono font-bold text-[#cba6f7] tracking-wider">
+                        [LANGUAGE_STATISTICS]
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono text-[#a6adc8]">
+                        {stats.leetcodeStats.languageStats.uniqueLanguages}{" "}
+                        languages
+                      </span>
+                      <span
+                        className={`text-2xl transition-transform duration-200 ${
+                          showLanguageStats ? "rotate-180" : ""
+                        }`}
+                      >
+                        ⌄
+                      </span>
+                    </div>
+                  </div>
+                </button>
+                {showLanguageStats && (
+                  <div className="border-t-2 border-[#45475a] p-6">
+                    <LanguageChart stats={stats.leetcodeStats.languageStats} />
+                  </div>
+                )}
+              </div>
+
+              {/* Recent Submissions Toggle */}
+              <div className="bg-[#313244] border-4 border-[#fab387] shadow-[4px_4px_0px_0px_#11111b]">
+                <button
+                  onClick={() =>
+                    setShowRecentSubmissions(!showRecentSubmissions)
+                  }
+                  className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📝</span>
+                      <h3 className="text-xl font-mono font-bold text-[#fab387] tracking-wider">
+                        [RECENT_SUBMISSIONS]
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono text-[#a6adc8]">
+                        {stats.leetcodeStats.recentSubmissions.length}{" "}
+                        submissions
+                      </span>
+                      <span
+                        className={`text-2xl transition-transform duration-200 ${
+                          showRecentSubmissions ? "rotate-180" : ""
+                        }`}
+                      >
+                        ⌄
+                      </span>
+                    </div>
+                  </div>
+                </button>
+                {showRecentSubmissions && (
+                  <div className="border-t-2 border-[#45475a] p-6">
+                    <RecentSubmissions
+                      submissions={stats.leetcodeStats.recentSubmissions}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "rating" && (
           <div>
-            <DifficultyChart stats={stats.leetcodeStats.difficultyProgress} />
-          </div>
+            <div className="mb-6 bg-[#313244] border-4 border-[#f9e2af] p-6 shadow-[4px_4px_0px_0px_#11111b]">
+              <h2 className="text-2xl font-mono font-bold text-[#f9e2af] tracking-wider mb-2">
+                [RATE_COMPLETED_QUESTIONS]
+              </h2>
+              <p className="font-mono text-sm text-[#cdd6f4]">
+                Rate your confidence level on recently completed questions to
+                optimize your review schedule.
+              </p>
+            </div>
 
-          {/* Language Chart */}
+            {ratingLoading ? (
+              <div className="text-center py-8">
+                <div className="bg-[#313244] border-4 border-[#45475a] p-6 shadow-[4px_4px_0px_0px_#11111b] inline-block">
+                  <div className="animate-pulse">
+                    <div className="h-6 bg-[#45475a] w-48 mb-4 mx-auto"></div>
+                    <div className="space-y-3">
+                      <div className="h-4 bg-[#45475a] w-64 mx-auto"></div>
+                      <div className="h-4 bg-[#45475a] w-32 mx-auto"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : ratingData && ratingData.questions.length > 0 ? (
+              <div className="space-y-6">
+                {ratingData.questions.map((question) => (
+                  <ReviewRating
+                    key={question.user_question_id}
+                    question={question}
+                    confidenceLevels={ratingData.confidence_levels}
+                    onRate={handleRateQuestion}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="bg-[#313244] border-4 border-[#a6e3a1] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block max-w-md mx-auto">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h3 className="text-xl font-mono font-bold text-[#a6e3a1] mb-2 tracking-wider">
+                    [ALL_CAUGHT_UP!]
+                  </h3>
+                  <p className="font-mono text-sm text-[#cdd6f4]">
+                    No questions need rating at the moment.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "settings" && (
           <div>
-            <LanguageChart stats={stats.leetcodeStats.languageStats} />
-          </div>
-
-          {/* Recent Submissions */}
-          <div className="xl:col-span-2">
-            <RecentSubmissions
-              submissions={stats.leetcodeStats.recentSubmissions}
+            <UserSettings
+              currentUsername={stats.username}
+              onUsernameUpdate={handleUsernameUpdate}
             />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

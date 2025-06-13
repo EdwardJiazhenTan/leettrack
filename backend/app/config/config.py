@@ -32,7 +32,7 @@ class Config:
     # External APIs
     LEETCODE_API_BASE_URL = os.environ.get('LEETCODE_API_URL', 'https://alfa-leetcode-api.onrender.com')
     
-    # Spaced Repetition Settings
+    # Spaced Repetition Settings - Legacy
     # Default review intervals in days based on ratings (1-5)
     REVIEW_INTERVALS = {
         1: 1,    # Review again after 1 day
@@ -41,6 +41,48 @@ class Config:
         4: 14,   # Review again after 2 weeks
         5: 30    # Review again after 1 month
     }
+    
+    # New Descriptive Review Confidence System
+    REVIEW_CONFIDENCE_LEVELS = [
+        {
+            'value': 'mastered',
+            'label': 'Mastered',
+            'description': "Don't need to review - came up with optimal solution immediately",
+            'color': '#10b981',  # green-500
+            'intervals': []  # No more reviews
+        },
+        {
+            'value': 'confident', 
+            'label': 'Confident',
+            'description': 'Came up with best solution quickly',
+            'color': '#3b82f6',  # blue-500
+            'intervals': [7, 21, 60]
+        },
+        {
+            'value': 'understood',
+            'label': 'Understood', 
+            'description': 'Solved but could use better/faster solution',
+            'color': '#f59e0b',  # amber-500
+            'intervals': [3, 7, 21]
+        },
+        {
+            'value': 'struggled',
+            'label': 'Struggled',
+            'description': "Didn't solve in time, but understand the solution",
+            'color': '#ef4444',  # red-500
+            'intervals': [1, 3, 7, 14, 30]
+        },
+        {
+            'value': 'confused',
+            'label': 'Confused',
+            'description': "Don't understand the solution, need multiple reviews",
+            'color': '#8b5cf6',  # violet-500
+            'intervals': [1, 3, 7, 14, 30]
+        }
+    ]
+    
+    # Daily Study Settings
+    NEW_QUESTIONS_PER_DAY = 1  # Default new questions per day (will be user configurable later)
 
 
 class DevelopmentConfig(Config):
