@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request, g
 from app.utils.leetcode_graphql import leetcode_client
+from app.utils.leetcode_stats import get_comprehensive_stats
 from app.models.question import Question
 from app import db
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+from app.utils.auth import auth_required
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ def _handle_graphql_response(graphql_response, success_message="Success"):
     return graphql_response, 200
 
 @leetcode.route('/stats', methods=['GET'])
+@auth_required
 def get_user_stats():
     """Get LeetCode statistics for the authenticated user"""
     try:
@@ -62,6 +65,7 @@ def get_user_stats():
         }), 500
 
 @leetcode.route('/submissions', methods=['GET'])
+@auth_required
 def get_user_submissions():
     """Get recent submissions for the authenticated user"""
     try:
@@ -241,6 +245,7 @@ def get_problems():
         }), 500
 
 @leetcode.route('/calendar', methods=['GET'])
+@auth_required
 def get_user_calendar():
     """Get calendar data for the authenticated user"""
     try:
@@ -262,7 +267,7 @@ def get_user_calendar():
             return response, status_code
         
         # Extract calendar data from profile
-        calendar_data = profile_data.get('profile', {}).get('submissionCalendar', '{}')
+        calendar_data = profile_data.get('submissionCalendar', '{}')
         
         return jsonify({
             'username': leetcode_username,
@@ -275,4 +280,59 @@ def get_user_calendar():
         return jsonify({
             'status': 'error',
             'message': 'An error occurred while fetching calendar data'
+        }), 500
+
+@leetcode.route('/profile/stats', methods=['GET'])
+@auth_required
+def get_user_profile_stats():
+    """Get comprehensive user profile statistics for the profile page"""
+    try:
+        # Get the authenticated user's LeetCode username
+        leetcode_username = g.user.leetcode_username
+        if not leetcode_username:
+            return jsonify({
+                'status': 'error',
+                'message': 'No LeetCode username associated with this account'
+            }), 400
+        
+        # Get user profile data from direct GraphQL API
+        profile_data = leetcode_client.get_user_profile(leetcode_username)
+        
+        # Check for API errors
+        if 'error' in profile_data:
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to fetch LeetCode profile: {profile_data["error"]}',
+                'details': profile_data.get('details', 'Unknown error')
+            }), 400
+        
+        # Add local database stats
+        from app.models.user_question import UserQuestion
+        from app.models.user_learning_path import UserLearningPath
+        
+        local_stats = {
+            'tracked_questions': UserQuestion.query.filter_by(user_id=g.user.user_id).count(),
+            'enrolled_paths': UserLearningPath.query.filter_by(user_id=g.user.user_id, is_active=True).count(),
+            'completed_paths': UserLearningPath.query.filter_by(user_id=g.user.user_id, is_active=True).filter(
+                UserLearningPath.completion_percentage >= 100
+            ).count()
+        }
+        
+        # Process the data using our statistics utilities
+        comprehensive_stats = get_comprehensive_stats(profile_data)
+        
+        # Return processed statistics instead of raw data
+        return jsonify({
+            'status': 'success',
+            'username': leetcode_username,
+            'leetcodeStats': comprehensive_stats,
+            'localStats': local_stats
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error getting user profile stats: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'An error occurred while fetching user profile statistics',
+            'error_details': str(e)
         }), 500 

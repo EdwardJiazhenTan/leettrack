@@ -12,6 +12,8 @@ class User(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     last_login = db.Column(db.DateTime(timezone=True))
     is_active = db.Column(db.Boolean, default=True)
+    # New: admin flag
+    is_admin = db.Column(db.Boolean, default=False)
     
     # Relationships
     user_questions = db.relationship('UserQuestion', back_populates='user', cascade='all, delete-orphan')

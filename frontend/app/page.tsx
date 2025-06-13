@@ -21,14 +21,31 @@ export default function Home() {
               </p>
             </div>
           </div>
-        ) : user ? (
+        ) : (
           <>
+            {/* Welcome Section */}
             <div className="mb-8 bg-[#313244] border-4 border-[#89b4fa] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-              <h1 className="text-3xl font-mono font-bold text-[#cdd6f4] tracking-wider">
-                [WELCOME_BACK]{" "}
-                <span className="text-[#a6e3a1]">{user.leetcode_username}</span>
-              </h1>
+              {user ? (
+                <h1 className="text-3xl font-mono font-bold text-[#cdd6f4] tracking-wider">
+                  [WELCOME_BACK]{" "}
+                  <span className="text-[#a6e3a1]">
+                    {user.leetcode_username}
+                  </span>
+                </h1>
+              ) : (
+                <div className="text-center">
+                  <h1 className="text-3xl font-mono font-bold mb-4 text-[#cdd6f4] tracking-wider">
+                    [WELCOME_TO_LEETTRACK]
+                  </h1>
+                  <p className="text-lg font-mono text-[#a6adc8] leading-relaxed">
+                    &gt; Track your LeetCode progress and discover curated
+                    learning paths.
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Main Content - Always Visible */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-[#313244] border-4 border-[#f9e2af] p-6 shadow-[4px_4px_0px_0px_#11111b]">
                 <h2 className="text-xl font-mono font-bold mb-4 text-[#f9e2af] tracking-wider">
@@ -38,38 +55,29 @@ export default function Home() {
               </div>
               <div className="bg-[#313244] border-4 border-[#cba6f7] p-6 shadow-[4px_4px_0px_0px_#11111b]">
                 <h2 className="text-xl font-mono font-bold mb-4 text-[#cba6f7] tracking-wider">
-                  [LEARNING_PATHS]
+                  [RECOMMENDED_PATHS]
                 </h2>
                 <LearningPathsList />
               </div>
             </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <div className="bg-[#313244] border-4 border-[#89b4fa] p-12 shadow-[6px_6px_0px_0px_#11111b] max-w-2xl mx-auto">
-              <h1 className="text-4xl font-mono font-bold mb-6 text-[#cdd6f4] tracking-wider">
-                [WELCOME_TO_LEETTRACK]
-              </h1>
-              <p className="text-lg font-mono text-[#a6adc8] mb-8 leading-relaxed">
-                &gt; Sign in or create an account to track your LeetCode
-                progress.
-              </p>
-              <div className="flex space-x-6 justify-center">
-                <a
-                  href="/login"
-                  className="bg-[#1e1e2e] border-4 border-[#89b4fa] px-8 py-4 text-[#89b4fa] hover:bg-[#89b4fa] hover:text-[#1e1e2e] font-mono font-bold transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
-                >
-                  [SIGN_IN]
-                </a>
-                <a
-                  href="/register"
-                  className="bg-[#89b4fa] px-8 py-4 text-[#1e1e2e] hover:bg-[#74c7ec] font-mono font-bold border-4 border-[#89b4fa] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
-                >
-                  [SIGN_UP]
-                </a>
+
+            {/* User-specific content */}
+            {user && (
+              <div className="mt-8 bg-[#313244] border-4 border-[#a6e3a1] p-6 shadow-[4px_4px_0px_0px_#11111b]">
+                <h2 className="text-xl font-mono font-bold mb-4 text-[#a6e3a1] tracking-wider">
+                  [YOUR_PROGRESS]
+                </h2>
+                <div className="text-center">
+                  <a
+                    href="/profile"
+                    className="inline-block bg-[#a6e3a1] text-[#1e1e2e] px-6 py-3 font-mono font-bold border-4 border-[#a6e3a1] hover:bg-[#94e2d5] hover:border-[#94e2d5] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                  >
+                    [VIEW_PROFILE]
+                  </a>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </main>
     </div>

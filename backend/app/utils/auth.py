@@ -14,9 +14,9 @@ def auth_required(f):
             # Verify JWT
             verify_jwt_in_request()
             
-            # Get user identity
+            # Get user identity (this will be a string)
             current_user_id = get_jwt_identity()
-            user = User.query.get(current_user_id)
+            user = User.query.get(int(current_user_id))
             
             if not user:
                 return jsonify({'message': 'User not found'}), 401

@@ -15,6 +15,7 @@ from app.utils.learning_paths import (
     add_question_to_path, 
     get_learning_path_with_questions
 )
+from app.utils.security import admin_required
 import logging
 
 logger = logging.getLogger(__name__)
@@ -115,7 +116,7 @@ def get_learning_path(path_id):
 def create_new_learning_path():
     """Create a new learning path"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
         
         # Validate required fields
@@ -161,7 +162,7 @@ def create_new_learning_path():
 def add_question_to_learning_path(path_id):
     """Add a question to a learning path"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         data = request.get_json()
         
         # Check if user owns the path or if it's a system path
@@ -218,7 +219,7 @@ def add_question_to_learning_path(path_id):
 def get_user_learning_paths():
     """Get learning paths that the user has enrolled in"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         
         # Get user's enrolled paths
         user_paths = db.session.query(UserLearningPath, LearningPath).join(
@@ -260,7 +261,7 @@ def get_user_learning_paths():
 def enroll_in_learning_path(path_id):
     """Enroll user in a learning path"""
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         
         # Check if path exists
         path = LearningPath.query.get(path_id)
@@ -306,4 +307,55 @@ def enroll_in_learning_path(path_id):
         return jsonify({
             'status': 'error',
             'message': 'Failed to enroll in learning path'
+        }), 500
+
+# ---------------------------------------------------------------------------
+# Admin Endpoints
+# ---------------------------------------------------------------------------
+
+@learning_paths_bp.route('/api/v1/admin/learning-paths', methods=['POST'])
+@admin_required
+def admin_create_learning_path():
+    """Admin: Create a new system learning path (is_active & public configurable)."""
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ['name', 'description']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
+
+        current_user_id = int(get_jwt_identity())
+
+        path = create_learning_path(
+            name=data['name'],
+            description=data['description'],
+            difficulty_level=data.get('difficulty_level', 'Intermediate'),
+            estimated_hours=data.get('estimated_hours'),
+            tags=data.get('tags'),
+            source='System',  # Mark as system path
+            creator_id=current_user_id,
+            is_public=data.get('is_public', True)
+        )
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Learning path created successfully',
+            'data': {
+                'path_id': path.path_id,
+                'name': path.name,
+                'description': path.description,
+                'is_public': path.is_public
+            }
+        }), 201
+
+    except Exception as e:
+        logger.error(f"[ADMIN] Error creating learning path: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to create learning path'
         }), 500 

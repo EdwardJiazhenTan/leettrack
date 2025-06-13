@@ -6,6 +6,7 @@ type User = {
   id: number;
   email: string;
   leetcode_username: string;
+  is_admin: boolean;
 };
 
 type AuthContextType = {
@@ -33,29 +34,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Check for stored tokens and fetch user profile on mount
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("🔍 Starting authentication check...");
       const token = localStorage.getItem("accessToken");
-      if (token) {
-        try {
-          // Request user profile
-          const response = await fetch("http://localhost:5000/api/v1/auth/me", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            credentials: "include",
-          });
+      console.log("🔑 Token found:", token ? "Yes" : "No");
 
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data);
-          } else {
-            // Invalid token, clear storage
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-          }
-        } catch (error) {
-          console.error("Authentication check failed", error);
-        }
+      if (!token) {
+        console.log("🚫 No token found, user not authenticated");
+        setIsLoading(false);
+        return;
       }
+
+      try {
+        console.log("📡 Fetching user profile from /api/v1/auth/me...");
+        // Request user profile with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        console.log("📡 Response status:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("✅ User data received:", data);
+          setUser(data);
+        } else {
+          console.log("❌ Invalid token, clearing storage");
+          // Invalid token, clear storage
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
+      } catch (error) {
+        console.error("💥 Authentication check failed", error);
+        // Clear potentially invalid tokens on error
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
+
+      console.log("✅ Setting isLoading to false");
       setIsLoading(false);
     };
 

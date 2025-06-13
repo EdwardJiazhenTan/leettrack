@@ -92,7 +92,7 @@ class LeetCodeAPI:
                 if time_since_last < 1:  # Wait at least 1 second between requests
                     time.sleep(1 - time_since_last)
             
-            response = requests.get(url, params=params, timeout=15)
+            response = requests.get(url, params=params, timeout=30)
             self.last_request_time = datetime.now()
             
             # Handle rate limiting

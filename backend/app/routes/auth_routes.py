@@ -40,8 +40,8 @@ def register():
         db.session.commit()
         
         # Generate tokens
-        access_token = create_access_token(identity=new_user.user_id)
-        refresh_token = create_refresh_token(identity=new_user.user_id)
+        access_token = create_access_token(identity=str(new_user.user_id))
+        refresh_token = create_refresh_token(identity=str(new_user.user_id))
         
         return jsonify({
             'message': 'Registration successful',
@@ -50,7 +50,8 @@ def register():
             'user': {
                 'id': new_user.user_id,
                 'email': new_user.email,
-                'leetcode_username': new_user.leetcode_username
+                'leetcode_username': new_user.leetcode_username,
+                'is_admin': new_user.is_admin
             }
         }), 201
     
@@ -79,8 +80,8 @@ def login():
         db.session.commit()
         
         # Generate tokens
-        access_token = create_access_token(identity=user.user_id)
-        refresh_token = create_refresh_token(identity=user.user_id)
+        access_token = create_access_token(identity=str(user.user_id))
+        refresh_token = create_refresh_token(identity=str(user.user_id))
         
         return jsonify({
             'message': 'Login successful',
@@ -89,7 +90,8 @@ def login():
             'user': {
                 'id': user.user_id,
                 'email': user.email,
-                'leetcode_username': user.leetcode_username
+                'leetcode_username': user.leetcode_username,
+                'is_admin': user.is_admin
             }
         }), 200
     
@@ -119,7 +121,7 @@ def me():
     """Get the current user's profile"""
     try:
         current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        user = User.query.get(int(current_user_id))
         
         if not user:
             return jsonify({'message': 'User not found'}), 404
@@ -128,6 +130,7 @@ def me():
             'id': user.user_id,
             'email': user.email,
             'leetcode_username': user.leetcode_username,
+            'is_admin': user.is_admin,
             'created_at': user.created_at,
             'last_login': user.last_login
         }), 200

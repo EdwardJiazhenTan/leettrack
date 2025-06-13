@@ -60,6 +60,64 @@ export async function fetchApi<T>(endpoint: string): Promise<ApiResponse<T>> {
 }
 
 /**
+ * Make an authenticated GET request to the API with JWT token
+ */
+export async function fetchApiWithAuth<T>(
+  endpoint: string
+): Promise<ApiResponse<T>> {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      return {
+        data: null,
+        error: "No access token found",
+        status: 401,
+      };
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+      mode: "cors",
+    });
+
+    // Handle CORS or network errors
+    if (response.status === 0 || response.type === "opaque") {
+      console.error("CORS error or network failure");
+      return {
+        data: null,
+        error: "Cross-origin request blocked. CORS issue detected.",
+        status: 0,
+      };
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    return {
+      data: response.ok ? data : null,
+      error: response.ok ? null : data?.message || "An error occurred",
+      status: response.status,
+    };
+  } catch (error) {
+    console.error("API request failed:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Network error",
+      status: 0,
+    };
+  }
+}
+
+/**
  * Make a POST request to the API
  */
 export async function postApi<T, D>(
@@ -120,6 +178,7 @@ export const leetcodeApi = {
   },
   getProblemBySlug: (titleSlug: string) =>
     fetchApi(`/leetcode/problem/${titleSlug}`),
+  getUserProfileStats: () => fetchApiWithAuth("/leetcode/profile/stats"),
 };
 
 /**

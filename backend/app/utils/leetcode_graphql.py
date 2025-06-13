@@ -200,7 +200,7 @@ class LeetCodeGraphQLClient:
             return {'error': 'Failed to format response', 'details': str(e)}
     
     def get_user_profile(self, username: str) -> Dict[str, Any]:
-        """Get user profile data"""
+        """Get user profile data formatted to match external API"""
         query = """
         query getUserProfile($username: String!) {
             allQuestionsCount {
@@ -267,6 +267,7 @@ class LeetCodeGraphQLClient:
                 timestamp
                 statusDisplay
                 lang
+                __typename
             }
         }
         """
@@ -278,16 +279,62 @@ class LeetCodeGraphQLClient:
         
         try:
             user_data = result['data']['matchedUser']
+            all_questions = result['data']['allQuestionsCount']
+            
             if not user_data:
                 return {'error': f'User {username} not found'}
             
-            return {
-                'username': user_data['username'],
-                'profile': user_data['profile'],
-                'submitStats': user_data['submitStats'],
-                'badges': user_data['badges'],
-                'recentSubmissions': result['data']['recentSubmissionList']
+            # Extract submission stats
+            submit_stats = user_data['submitStats']
+            ac_stats = submit_stats['acSubmissionNum']
+            total_stats = submit_stats['totalSubmissionNum']
+            
+            # Find stats by difficulty
+            def find_stat(stats_list, difficulty):
+                for stat in stats_list:
+                    if stat['difficulty'] == difficulty:
+                        return stat
+                return {'count': 0, 'submissions': 0}
+            
+            easy_ac = find_stat(ac_stats, 'Easy')
+            medium_ac = find_stat(ac_stats, 'Medium')
+            hard_ac = find_stat(ac_stats, 'Hard')
+            all_ac = find_stat(ac_stats, 'All')
+            
+            # Get total question counts
+            def find_total_questions(all_questions, difficulty):
+                for q in all_questions:
+                    if q['difficulty'] == difficulty:
+                        return q['count']
+                return 0
+            
+            total_easy = find_total_questions(all_questions, 'Easy')
+            total_medium = find_total_questions(all_questions, 'Medium')
+            total_hard = find_total_questions(all_questions, 'Hard')
+            
+            # Format response to match external API structure
+            formatted_response = {
+                'contributionPoint': user_data['contributions']['points'],
+                'easySolved': easy_ac['count'],
+                'hardSolved': hard_ac['count'],
+                'matchedUserStats': {
+                    'acSubmissionNum': submit_stats['acSubmissionNum'],
+                    'totalSubmissionNum': submit_stats['totalSubmissionNum']
+                },
+                'mediumSolved': medium_ac['count'],
+                'ranking': user_data['profile']['ranking'],
+                'recentSubmissions': result['data']['recentSubmissionList'],
+                'reputation': user_data['profile']['reputation'],
+                'submissionCalendar': user_data['submissionCalendar'],
+                'totalEasy': total_easy,
+                'totalHard': total_hard,
+                'totalMedium': total_medium,
+                'totalQuestions': total_easy + total_medium + total_hard,
+                'totalSolved': all_ac['count'],
+                'totalSubmissions': submit_stats['totalSubmissionNum']
             }
+            
+            return formatted_response
             
         except (KeyError, TypeError) as e:
             logger.error(f"Error formatting user profile response: {str(e)}")

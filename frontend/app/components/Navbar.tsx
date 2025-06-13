@@ -26,6 +26,20 @@ export default function Navbar() {
                 <span className="text-[#a6e3a1] font-mono text-sm">
                   &gt; {user.leetcode_username}
                 </span>
+                <Link
+                  href="/profile"
+                  className="bg-[#a6e3a1] hover:bg-[#94e2d5] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#a6e3a1] hover:border-[#94e2d5] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
+                >
+                  [PROFILE]
+                </Link>
+                {user.is_admin && (
+                  <Link
+                    href="/admin"
+                    className="bg-[#f9e2af] hover:bg-[#f2d5a6] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#f9e2af] hover:border-[#f2d5a6] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
+                  >
+                    [ADMIN]
+                  </Link>
+                )}
                 <button
                   onClick={logout}
                   className="bg-[#f38ba8] hover:bg-[#eba0ac] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#f38ba8] hover:border-[#eba0ac] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
@@ -34,7 +48,7 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="space-x-4">
+              <div className="flex items-center space-x-4">
                 <Link
                   className="bg-[#1e1e2e] border-2 border-[#89b4fa] px-4 py-2 text-[#89b4fa] hover:bg-[#89b4fa] hover:text-[#1e1e2e] font-mono font-bold transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
                   href="/login"
