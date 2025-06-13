@@ -104,7 +104,21 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Production environment configuration"""
-    # Production-specific configurations
+    DEBUG = False
+    TESTING = False
+    
+    # Production security - these MUST be set via environment variables
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+    
+    # Database configuration - use environment variable for full URL
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    
+    # Production logging
+    LOG_LEVEL = 'INFO'
+    
+    # CORS origins for production (comma-separated list)
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '').split(',') if os.environ.get('CORS_ORIGINS') else []
 
 
 # Configuration dictionary for selecting the correct configuration based on environment variable

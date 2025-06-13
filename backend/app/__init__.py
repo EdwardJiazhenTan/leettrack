@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager
 from app.config.config import config_by_name
 from datetime import timedelta
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -35,9 +36,19 @@ def create_app(config_name='development'):
     migrate.init_app(app, db)
     jwt.init_app(app)
     
-    # Configure CORS properly to allow all routes
+    # Dynamic CORS configuration based on environment
+    if config_name == 'production':
+        # Production: use environment variable for allowed origins
+        cors_origins = os.environ.get('CORS_ORIGINS', '').split(',') if os.environ.get('CORS_ORIGINS') else []
+        # Filter out empty strings
+        cors_origins = [origin.strip() for origin in cors_origins if origin.strip()]
+    else:
+        # Development: allow localhost
+        cors_origins = ["http://localhost:3000"]
+    
+    # Configure CORS
     CORS(app, 
-         resources={r"/*": {"origins": ["http://localhost:3000"], "supports_credentials": True}},
+         resources={r"/*": {"origins": cors_origins, "supports_credentials": True}},
          allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          expose_headers=["Content-Type", "Authorization"],
