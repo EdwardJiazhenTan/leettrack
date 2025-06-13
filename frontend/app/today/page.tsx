@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import ThreadsBackground from "../components/ThreadsBackground";
+import Footer from "../components/Footer";
+import ProgressBar from "../components/ProgressBar";
 import { authApi, leetcodeApi } from "../services/api";
 
 interface QuestionForReview {
@@ -209,9 +212,11 @@ const TodayPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <div className="bg-[#313244] border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
-              <p className="text-xl font-mono text-[#cdd6f4] tracking-wider">
-                [AUTHENTICATING...]
-              </p>
+              <ProgressBar
+                text="AUTHENTICATING"
+                duration={1500}
+                showPercentage={true}
+              />
             </div>
           </div>
         </div>
@@ -249,262 +254,267 @@ const TodayPage: React.FC = () => {
     reviewsDue.length + questionsNeedingRating.length + (dailyQuestion ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-[#1e1e2e]">
+    <ThreadsBackground className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8 bg-[#313244] border-4 border-[#89b4fa] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-          <h1 className="text-3xl font-mono font-bold text-[#cdd6f4] tracking-wider mb-2">
-            [TODAY&apos;S_QUESTIONS]
-          </h1>
-          <p className="text-lg font-mono text-[#a6adc8] tracking-wide">
-            &gt; Total questions for today:{" "}
-            <span className="text-[#89b4fa] font-bold">{totalQuestions}</span>
-          </p>
-          {totalQuestions === 0 && (
-            <p className="text-lg font-mono text-[#a6e3a1] tracking-wide mt-2">
-              &gt; All caught up! 🎉
-            </p>
-          )}
-        </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="mb-8 bg-[#313244] border-4 border-[#f38ba8] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-            <p className="text-[#f38ba8] font-mono font-bold">[ERROR]</p>
-            <p className="text-[#f38ba8] font-mono text-sm mt-1">{error}</p>
-            <button
-              onClick={fetchTodaysData}
-              className="mt-3 px-4 py-2 bg-[#f9e2af] text-[#1e1e2e] font-mono font-bold border-2 border-[#f9e2af] hover:bg-[#fab387] hover:border-[#fab387] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b] tracking-wider"
-            >
-              [RETRY]
-            </button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="bg-[#313244] border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
-              <p className="text-xl font-mono text-[#cdd6f4] tracking-wider">
-                [LOADING_TODAY&apos;S_QUESTIONS...]
-              </p>
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b]">
+                <ProgressBar
+                  text="LOADING TODAY'S QUESTIONS"
+                  duration={1800}
+                  showPercentage={true}
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Daily LeetCode Challenge */}
-            {dailyQuestion && (
-              <div className="bg-[#313244] border-4 border-[#f9e2af] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-                <h2 className="text-xl font-mono font-bold mb-4 text-[#f9e2af] tracking-wider">
-                  [DAILY_LEETCODE_CHALLENGE]
-                </h2>
-                <div className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-mono font-bold text-[#89b4fa]">
-                      {dailyQuestion.question.title}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
-                        dailyQuestion.question.difficulty
-                      )}`}
-                    >
-                      [{dailyQuestion.question.difficulty?.toUpperCase()}]
-                    </span>
-                  </div>
-                  <p className="font-mono text-sm text-[#a6adc8] mb-4">
-                    <span className="text-[#fab387]">&gt;</span> Date:{" "}
-                    <span className="text-[#f9e2af]">{dailyQuestion.date}</span>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              {/* Header */}
+              <div className="text-center mb-8 bg-[#313244]/80 backdrop-blur-sm border-4 border-[#f9e2af] p-6 shadow-[4px_4px_0px_0px_#11111b]">
+                <h1 className="text-3xl font-mono font-bold text-[#f9e2af] tracking-wider mb-2">
+                  [TODAY&apos;S_QUESTIONS]
+                </h1>
+                <p className="text-sm font-mono text-[#a6adc8] tracking-wide">
+                  &gt; {totalQuestions} questions scheduled for today
+                </p>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="mb-8 bg-[#313244] border-4 border-[#f38ba8] p-6 shadow-[4px_4px_0px_0px_#11111b]">
+                  <p className="text-[#f38ba8] font-mono font-bold">[ERROR]</p>
+                  <p className="text-[#f38ba8] font-mono text-sm mt-1">
+                    {error}
                   </p>
-                  <a
-                    href={`https://leetcode.com/problems/${dailyQuestion.question.titleSlug}/`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                  <button
+                    onClick={fetchTodaysData}
+                    className="mt-3 px-4 py-2 bg-[#f9e2af] text-[#1e1e2e] font-mono font-bold border-2 border-[#f9e2af] hover:bg-[#fab387] hover:border-[#fab387] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b] tracking-wider"
                   >
-                    [SOLVE_DAILY_CHALLENGE]
-                  </a>
+                    [RETRY]
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Reviews Due Today */}
-            {reviewsDue.length > 0 && (
-              <div className="bg-[#313244] border-4 border-[#a6e3a1] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-                <h2 className="text-xl font-mono font-bold mb-4 text-[#a6e3a1] tracking-wider">
-                  [REVIEWS_DUE_TODAY] ({reviewsDue.length})
-                </h2>
-                <div className="space-y-4">
-                  {reviewsDue.map((question) => (
-                    <div
-                      key={question.user_question_id}
-                      className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-mono font-bold text-[#cdd6f4]">
-                          {question.title}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
-                            question.difficulty
-                          )}`}
-                        >
-                          [{question.difficulty?.toUpperCase()}]
-                        </span>
-                      </div>
-                      <div className="mb-4 space-y-1">
-                        <p className="font-mono text-sm text-[#a6adc8]">
-                          <span className="text-[#fab387]">&gt;</span> Current
-                          confidence:
-                          <span
-                            className={`font-bold ml-1 ${getConfidenceColor(
-                              question.confidence
-                            )}`}
-                          >
-                            [{question.confidence?.toUpperCase()}]
-                          </span>
-                        </p>
-                        <p className="font-mono text-sm text-[#a6adc8]">
-                          <span className="text-[#fab387]">&gt;</span> Times
-                          reviewed:
-                          <span className="text-[#f9e2af] font-bold ml-1">
-                            {question.times_reviewed}
-                          </span>
-                        </p>
-                      </div>
-                      <div className="flex gap-3 flex-wrap">
-                        <a
-                          href={question.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
-                        >
-                          [REVIEW_PROBLEM]
-                        </a>
-                        {confidenceOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() =>
-                              handleCompleteReview(
-                                question.user_question_id,
-                                option.value
-                              )
-                            }
-                            disabled={reviewsLoading}
-                            className={`px-3 py-2 font-mono font-bold text-xs border-2 shadow-[2px_2px_0px_0px_#11111b] transition-all duration-200 ${
-                              option.color
-                            } text-[#1e1e2e] border-[${
-                              option.color.split("[")[1].split("]")[0]
-                            }] hover:opacity-80 disabled:opacity-50`}
-                          >
-                            [{option.label}]
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Questions Needing Rating */}
-            {questionsNeedingRating.length > 0 && (
-              <div className="bg-[#313244] border-4 border-[#cba6f7] p-6 shadow-[4px_4px_0px_0px_#11111b]">
-                <h2 className="text-xl font-mono font-bold mb-4 text-[#cba6f7] tracking-wider">
-                  [RATE_RECENT_SOLUTIONS] ({questionsNeedingRating.length})
-                </h2>
-                <div className="space-y-4">
-                  {questionsNeedingRating.map((question) => (
-                    <div
-                      key={question.user_question_id}
-                      className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-mono font-bold text-[#cdd6f4]">
-                          {question.title}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
-                            question.difficulty
-                          )}`}
-                        >
-                          [{question.difficulty?.toUpperCase()}]
-                        </span>
-                      </div>
-                      <p className="font-mono text-sm text-[#a6adc8] mb-4">
-                        <span className="text-[#fab387]">&gt;</span> Solved at:
-                        <span className="text-[#f9e2af] font-bold ml-1">
-                          {question.solved_at
-                            ? new Date(question.solved_at).toLocaleDateString()
-                            : "Unknown"}
-                        </span>
-                      </p>
-                      <div className="flex gap-3 flex-wrap">
-                        <a
-                          href={question.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
-                        >
-                          [VIEW_PROBLEM]
-                        </a>
-                        {confidenceOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() =>
-                              handleRateQuestion(
-                                question.user_question_id,
-                                option.value
-                              )
-                            }
-                            disabled={ratingsLoading}
-                            className={`px-3 py-2 font-mono font-bold text-xs border-2 shadow-[2px_2px_0px_0px_#11111b] transition-all duration-200 ${
-                              option.color
-                            } text-[#1e1e2e] border-[${
-                              option.color.split("[")[1].split("]")[0]
-                            }] hover:opacity-80 disabled:opacity-50`}
-                          >
-                            [{option.label}]
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {totalQuestions === 0 && !loading && (
-              <div className="text-center py-12">
-                <div className="bg-[#313244] border-4 border-[#a6e3a1] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
-                  <h2 className="text-xl font-mono font-bold mb-4 text-[#a6e3a1] tracking-wider">
-                    [ALL_CAUGHT_UP!]
-                  </h2>
-                  <p className="text-lg font-mono text-[#cdd6f4] tracking-wider mb-4">
-                    &gt; No questions for today. Great job!
-                  </p>
-                  <div className="flex gap-4 justify-center">
+              {/* Questions List */}
+              <div className="flex-1">
+                {totalQuestions === 0 ? (
+                  <div className="text-center py-16 bg-[#313244]/80 backdrop-blur-sm border-4 border-[#45475a] shadow-[4px_4px_0px_0px_#11111b]">
+                    <div className="text-6xl mb-4">🎉</div>
+                    <h2 className="text-2xl font-mono font-bold text-[#a6e3a1] tracking-wider mb-4">
+                      [ALL_DONE]
+                    </h2>
+                    <p className="text-lg font-mono text-[#a6adc8] tracking-wide mb-8">
+                      &gt; No questions scheduled for today!
+                    </p>
                     <Link
                       href="/paths"
-                      className="inline-block bg-[#f38ba8] text-[#1e1e2e] px-6 py-3 font-mono font-bold border-4 border-[#f38ba8] hover:bg-[#eba0ac] hover:border-[#eba0ac] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                      className="inline-block bg-[#89b4fa] hover:bg-[#74c7ec] text-[#1e1e2e] px-6 py-3 font-mono font-bold border-2 border-[#89b4fa] hover:border-[#74c7ec] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b] hover:shadow-[4px_4px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px]"
                     >
                       [EXPLORE_PATHS]
                     </Link>
-                    <Link
-                      href="/profile"
-                      className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-6 py-3 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
-                    >
-                      [VIEW_PROGRESS]
-                    </Link>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Daily LeetCode Challenge */}
+                    {dailyQuestion && (
+                      <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#f9e2af] p-6 shadow-[4px_4px_0px_0px_#11111b] hover:shadow-[6px_6px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200">
+                        <h2 className="text-xl font-mono font-bold mb-4 text-[#f9e2af] tracking-wider">
+                          [DAILY_LEETCODE_CHALLENGE]
+                        </h2>
+                        <div className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-lg font-mono font-bold text-[#89b4fa]">
+                              {dailyQuestion.question.title}
+                            </h3>
+                            <span
+                              className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
+                                dailyQuestion.question.difficulty
+                              )}`}
+                            >
+                              [
+                              {dailyQuestion.question.difficulty?.toUpperCase()}
+                              ]
+                            </span>
+                          </div>
+                          <p className="font-mono text-sm text-[#a6adc8] mb-4">
+                            <span className="text-[#fab387]">&gt;</span> Date:{" "}
+                            <span className="text-[#f9e2af]">
+                              {dailyQuestion.date}
+                            </span>
+                          </p>
+                          <a
+                            href={`https://leetcode.com/problems/${dailyQuestion.question.titleSlug}/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                          >
+                            [SOLVE_DAILY_CHALLENGE]
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reviews Due Today */}
+                    {reviewsDue.length > 0 && (
+                      <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#a6e3a1] p-6 shadow-[4px_4px_0px_0px_#11111b] hover:shadow-[6px_6px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200">
+                        <h2 className="text-xl font-mono font-bold mb-4 text-[#a6e3a1] tracking-wider">
+                          [REVIEWS_DUE_TODAY] ({reviewsDue.length})
+                        </h2>
+                        <div className="space-y-4">
+                          {reviewsDue.map((question) => (
+                            <div
+                              key={question.user_question_id}
+                              className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-lg font-mono font-bold text-[#cdd6f4]">
+                                  {question.title}
+                                </h3>
+                                <span
+                                  className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
+                                    question.difficulty
+                                  )}`}
+                                >
+                                  [{question.difficulty?.toUpperCase()}]
+                                </span>
+                              </div>
+                              <div className="mb-4 space-y-1">
+                                <p className="font-mono text-sm text-[#a6adc8]">
+                                  <span className="text-[#fab387]">&gt;</span>{" "}
+                                  Current confidence:
+                                  <span
+                                    className={`font-bold ml-1 ${getConfidenceColor(
+                                      question.confidence
+                                    )}`}
+                                  >
+                                    [{question.confidence?.toUpperCase()}]
+                                  </span>
+                                </p>
+                                <p className="font-mono text-sm text-[#a6adc8]">
+                                  <span className="text-[#fab387]">&gt;</span>{" "}
+                                  Times reviewed:
+                                  <span className="text-[#f9e2af] font-bold ml-1">
+                                    {question.times_reviewed}
+                                  </span>
+                                </p>
+                              </div>
+                              <div className="flex gap-3 flex-wrap">
+                                <a
+                                  href={question.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                                >
+                                  [REVIEW_PROBLEM]
+                                </a>
+                                {confidenceOptions.map((option) => (
+                                  <button
+                                    key={option.value}
+                                    onClick={() =>
+                                      handleCompleteReview(
+                                        question.user_question_id,
+                                        option.value
+                                      )
+                                    }
+                                    disabled={reviewsLoading}
+                                    className={`px-3 py-2 font-mono font-bold text-xs border-2 shadow-[2px_2px_0px_0px_#11111b] transition-all duration-200 ${
+                                      option.color
+                                    } text-[#1e1e2e] border-[${
+                                      option.color.split("[")[1].split("]")[0]
+                                    }] hover:opacity-80 disabled:opacity-50`}
+                                  >
+                                    [{option.label}]
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Questions Needing Rating */}
+                    {questionsNeedingRating.length > 0 && (
+                      <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#cba6f7] p-6 shadow-[4px_4px_0px_0px_#11111b] hover:shadow-[6px_6px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200">
+                        <h2 className="text-xl font-mono font-bold mb-4 text-[#cba6f7] tracking-wider">
+                          [RATE_RECENT_SOLUTIONS] (
+                          {questionsNeedingRating.length})
+                        </h2>
+                        <div className="space-y-4">
+                          {questionsNeedingRating.map((question) => (
+                            <div
+                              key={question.user_question_id}
+                              className="bg-[#1e1e2e] border-2 border-[#45475a] p-4 shadow-[2px_2px_0px_0px_#11111b]"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-lg font-mono font-bold text-[#cdd6f4]">
+                                  {question.title}
+                                </h3>
+                                <span
+                                  className={`px-3 py-1 font-mono font-bold border-2 shadow-[2px_2px_0px_0px_#11111b] ${getDifficultyColor(
+                                    question.difficulty
+                                  )}`}
+                                >
+                                  [{question.difficulty?.toUpperCase()}]
+                                </span>
+                              </div>
+                              <p className="font-mono text-sm text-[#a6adc8] mb-4">
+                                <span className="text-[#fab387]">&gt;</span>{" "}
+                                Solved at:
+                                <span className="text-[#f9e2af] font-bold ml-1">
+                                  {question.solved_at
+                                    ? new Date(
+                                        question.solved_at
+                                      ).toLocaleDateString()
+                                    : "Unknown"}
+                                </span>
+                              </p>
+                              <div className="flex gap-3 flex-wrap">
+                                <a
+                                  href={question.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block bg-[#89b4fa] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-4 border-[#89b4fa] hover:bg-[#74c7ec] hover:border-[#74c7ec] transition-all duration-200 shadow-[3px_3px_0px_0px_#11111b] tracking-wider"
+                                >
+                                  [VIEW_PROBLEM]
+                                </a>
+                                {confidenceOptions.map((option) => (
+                                  <button
+                                    key={option.value}
+                                    onClick={() =>
+                                      handleRateQuestion(
+                                        question.user_question_id,
+                                        option.value
+                                      )
+                                    }
+                                    disabled={ratingsLoading}
+                                    className={`px-3 py-2 font-mono font-bold text-xs border-2 shadow-[2px_2px_0px_0px_#11111b] transition-all duration-200 ${
+                                      option.color
+                                    } text-[#1e1e2e] border-[${
+                                      option.color.split("[")[1].split("]")[0]
+                                    }] hover:opacity-80 disabled:opacity-50`}
+                                  >
+                                    [{option.label}]
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
-      </main>
-    </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <Footer />
+    </ThreadsBackground>
   );
 };
 

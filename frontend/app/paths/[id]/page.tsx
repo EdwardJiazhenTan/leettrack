@@ -1,21 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useAuth } from "../../context/AuthContext";
+import { useParams } from "next/navigation";
+import ThreadsBackground from "../../components/ThreadsBackground";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import ProgressBar from "../../components/ProgressBar";
 
 interface Question {
-  sequence_number: number;
   question_id: number;
-  leetcode_id: number;
   title: string;
-  url: string;
   difficulty: string;
+  leetcode_id: number;
+  url: string;
   tags: string[];
-  notes: string;
-  estimated_minutes: number;
-  importance: number;
 }
 
 interface LearningPath {
@@ -25,622 +23,222 @@ interface LearningPath {
   difficulty_level: string;
   estimated_hours: number;
   tags: string[];
-  created_at: string;
-  source: string;
   questions: Question[];
 }
 
 export default function PathDetailPage() {
-  const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
-  const pathId = params.id as string;
+  const pathId = params.id;
 
   const [path, setPath] = useState<LearningPath | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [enrolling, setEnrolling] = useState(false);
-  const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(
-    new Set()
-  );
-  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [completedQuestions] = useState<Set<number>>(new Set());
 
-  const colors = {
-    base: "#1e1e2e",
-    surface: "#313244",
-    overlay: "#45475a",
-    text: "#cdd6f4",
-    primary: "#89b4fa",
-    accent: "#a6e3a1",
-    warning: "#f9e2af",
-    error: "#f38ba8",
-    pink: "#f38ba8",
-    purple: "#cba6f7",
-    success: "#a6e3a1",
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case "easy":
+        return "text-[#a6e3a1] border-[#a6e3a1]";
+      case "medium":
+        return "text-[#f9e2af] border-[#f9e2af]";
+      case "hard":
+        return "text-[#f38ba8] border-[#f38ba8]";
+      default:
+        return "text-[#cdd6f4] border-[#cdd6f4]";
+    }
   };
 
+  const completedCount = completedQuestions.size;
+
   useEffect(() => {
+    const fetchPath = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/v1/learning-paths/${pathId}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPath(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching path:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (pathId) {
       fetchPath();
     }
   }, [pathId]);
 
-  const fetchPath = async () => {
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/v1/learning-paths/${pathId}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch path");
-
-      const data = await res.json();
-      setPath(data.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const enrollInPath = async () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    setEnrolling(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `http://localhost:5000/api/v1/user/learning-paths/${pathId}/enroll`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (res.ok) {
-        setError(null);
-        // Show success message or update UI
-      } else {
-        const data = await res.json();
-        setError(data.message || "Failed to enroll in path");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setEnrolling(false);
-    }
-  };
-
-  const toggleQuestionComplete = (questionId: number) => {
-    const newCompleted = new Set(completedQuestions);
-    if (newCompleted.has(questionId)) {
-      newCompleted.delete(questionId);
-    } else {
-      newCompleted.add(questionId);
-    }
-    setCompletedQuestions(newCompleted);
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "#a6e3a1";
-      case "Medium":
-        return "#f9e2af";
-      case "Hard":
-        return "#f38ba8";
-      default:
-        return colors.overlay;
-    }
-  };
-
-  const getImportanceStars = (importance: number) => {
-    return "★".repeat(importance) + "☆".repeat(5 - importance);
-  };
-
-  const progressPercentage = path?.questions.length
-    ? Math.round((completedQuestions.size / path.questions.length) * 100)
-    : 0;
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: colors.base, color: colors.text }}
-      >
-        <div className="font-mono text-2xl">[LOADING_PATH...]</div>
-      </div>
-    );
-  }
-
-  if (!path) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: colors.base, color: colors.text }}
-      >
-        <div className="font-mono text-2xl">[PATH_NOT_FOUND]</div>
-      </div>
+      <ThreadsBackground className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b]">
+            <ProgressBar
+              text="LOADING PATH"
+              duration={1600}
+              showPercentage={true}
+            />
+          </div>
+        </div>
+        <Footer />
+      </ThreadsBackground>
     );
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: colors.base, fontFamily: "monospace" }}
-    >
+    <ThreadsBackground className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-4">
-              <button
-                onClick={() => router.push("/paths")}
-                className="px-3 py-1 border-2 hover:bg-opacity-80 transition-all text-sm"
-                style={{
-                  backgroundColor: colors.overlay,
-                  color: colors.text,
-                  border: `2px solid ${colors.overlay}`,
-                }}
-              >
-                [← BACK_TO_PATHS]
-              </button>
-              <div className="flex gap-2">
-                <span
-                  className="px-3 py-1 text-sm font-bold rounded"
-                  style={{
-                    backgroundColor:
-                      path.difficulty_level === "Beginner"
-                        ? "#a6e3a1"
-                        : path.difficulty_level === "Intermediate"
-                        ? "#f9e2af"
-                        : "#f38ba8",
-                    color: colors.base,
-                  }}
-                >
-                  {path.difficulty_level}
-                </span>
-                <span
-                  className="px-3 py-1 text-sm font-bold rounded"
-                  style={{
-                    backgroundColor: colors.primary,
-                    color: colors.base,
-                  }}
-                >
-                  {path.source}
-                </span>
-              </div>
-            </div>
-
-            <h1
-              className="text-4xl font-bold mb-4"
-              style={{ color: colors.primary }}
-            >
-              {path.name}
-            </h1>
-
-            <p
-              className="text-lg mb-6 leading-relaxed"
-              style={{ color: colors.text }}
-            >
-              {path.description}
-            </p>
-
-            {/* Path Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div
-                className="text-center p-4 border-2"
-                style={{
-                  backgroundColor: colors.surface,
-                  border: `2px solid ${colors.overlay}`,
-                }}
-              >
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: colors.warning }}
-                >
-                  {path.questions.length}
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {path ? (
+            <div className="flex-1 flex flex-col">
+              {/* Path Header */}
+              <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#89b4fa] p-6 shadow-[4px_4px_0px_0px_#11111b] mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className={`px-3 py-1 text-xs font-mono font-bold border-2 ${getDifficultyColor(
+                      path.difficulty_level
+                    )}`}
+                  >
+                    [{path.difficulty_level.toUpperCase()}]
+                  </span>
+                  <span className="text-sm font-mono text-[#a6adc8]">
+                    {path.questions.length} questions
+                  </span>
                 </div>
-                <div className="text-sm" style={{ color: colors.text }}>
-                  QUESTIONS
-                </div>
-              </div>
-              <div
-                className="text-center p-4 border-2"
-                style={{
-                  backgroundColor: colors.surface,
-                  border: `2px solid ${colors.overlay}`,
-                }}
-              >
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: colors.accent }}
-                >
-                  {path.estimated_hours || "N/A"}
-                </div>
-                <div className="text-sm" style={{ color: colors.text }}>
-                  HOURS
-                </div>
-              </div>
-              <div
-                className="text-center p-4 border-2"
-                style={{
-                  backgroundColor: colors.surface,
-                  border: `2px solid ${colors.overlay}`,
-                }}
-              >
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: colors.success }}
-                >
-                  {completedQuestions.size}
-                </div>
-                <div className="text-sm" style={{ color: colors.text }}>
-                  COMPLETED
-                </div>
-              </div>
-              <div
-                className="text-center p-4 border-2"
-                style={{
-                  backgroundColor: colors.surface,
-                  border: `2px solid ${colors.overlay}`,
-                }}
-              >
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: colors.purple }}
-                >
-                  {progressPercentage}%
-                </div>
-                <div className="text-sm" style={{ color: colors.text }}>
-                  PROGRESS
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Enroll Button */}
-          <div className="ml-8">
-            <button
-              onClick={enrollInPath}
-              disabled={enrolling}
-              className="px-6 py-3 font-bold border-2 hover:bg-opacity-80 transition-all"
-              style={{
-                backgroundColor: colors.accent,
-                color: colors.base,
-                border: `2px solid ${colors.accent}`,
-                boxShadow: "4px 4px 0px #11111b",
-                cursor: enrolling ? "not-allowed" : "pointer",
-              }}
-            >
-              {enrolling ? "[ENROLLING...]" : "[ENROLL_IN_PATH]"}
-            </button>
-          </div>
-        </div>
+                <h1 className="text-3xl font-mono font-bold text-[#89b4fa] tracking-wider mb-4">
+                  {path.name}
+                </h1>
 
-        {/* Error Display */}
-        {error && (
-          <div
-            className="p-4 mb-6 border-2"
-            style={{
-              backgroundColor: colors.error,
-              color: colors.base,
-              border: `2px solid ${colors.error}`,
-              boxShadow: "4px 4px 0px #11111b",
-            }}
-          >
-            [ERROR] {error}
-          </div>
-        )}
+                <p className="text-lg font-mono text-[#a6adc8] leading-relaxed mb-4">
+                  {path.description}
+                </p>
 
-        {/* Progress Bar */}
-        <div
-          className="mb-8 p-4 border-2"
-          style={{
-            backgroundColor: colors.surface,
-            border: `2px solid ${colors.overlay}`,
-            boxShadow: "4px 4px 0px #11111b",
-          }}
-        >
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-bold" style={{ color: colors.accent }}>
-              [PROGRESS_TRACKER]
-            </span>
-            <span style={{ color: colors.text }}>
-              {completedQuestions.size}/{path.questions.length} questions
-              completed
-            </span>
-          </div>
-          <div
-            className="w-full h-4 border-2"
-            style={{
-              backgroundColor: colors.overlay,
-              border: `2px solid ${colors.overlay}`,
-            }}
-          >
-            <div
-              className="h-full transition-all duration-300"
-              style={{
-                backgroundColor: colors.accent,
-                width: `${progressPercentage}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Tags */}
-        {path.tags && path.tags.length > 0 && (
-          <div className="mb-8">
-            <h3 className="font-bold mb-3" style={{ color: colors.purple }}>
-              [TAGS]
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {path.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 text-sm rounded border"
-                  style={{
-                    backgroundColor: colors.purple,
-                    color: colors.base,
-                    border: `1px solid ${colors.purple}`,
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Questions List */}
-        <div
-          className="border-2 p-6"
-          style={{
-            backgroundColor: colors.surface,
-            border: `2px solid ${colors.overlay}`,
-            boxShadow: "6px 6px 0px #11111b",
-          }}
-        >
-          <h2
-            className="text-2xl font-bold mb-6"
-            style={{ color: colors.primary }}
-          >
-            [QUESTIONS] ({path.questions.length})
-          </h2>
-
-          <div className="space-y-4">
-            {path.questions.map((question) => (
-              <div
-                key={question.question_id}
-                className="border-2 p-4 transition-all"
-                style={{
-                  backgroundColor: completedQuestions.has(question.question_id)
-                    ? colors.overlay
-                    : colors.base,
-                  border: `2px solid ${colors.overlay}`,
-                  opacity: completedQuestions.has(question.question_id)
-                    ? 0.7
-                    : 1,
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    {/* Completion Checkbox */}
-                    <button
-                      onClick={() =>
-                        toggleQuestionComplete(question.question_id)
-                      }
-                      className="w-6 h-6 border-2 flex items-center justify-center hover:bg-opacity-80"
-                      style={{
-                        backgroundColor: completedQuestions.has(
-                          question.question_id
-                        )
-                          ? colors.success
-                          : colors.overlay,
-                        border: `2px solid ${colors.success}`,
-                        color: colors.base,
-                      }}
-                    >
-                      {completedQuestions.has(question.question_id) && "✓"}
-                    </button>
-
-                    {/* Question Number */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {path.tags.map((tag) => (
                     <span
-                      className="px-3 py-1 text-sm font-bold rounded min-w-[3rem] text-center"
-                      style={{
-                        backgroundColor: colors.primary,
-                        color: colors.base,
-                      }}
+                      key={tag}
+                      className="px-2 py-1 text-xs font-mono bg-[#45475a] text-[#cdd6f4] border border-[#585b70]"
                     >
-                      #{question.sequence_number}
+                      {tag}
                     </span>
+                  ))}
+                </div>
 
-                    {/* Question Title */}
-                    <div className="flex-1">
-                      <h3
-                        className="text-lg font-bold mb-1"
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-mono text-[#a6adc8]">
+                    Estimated: {path.estimated_hours}h
+                  </span>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-mono text-[#a6e3a1]">
+                      Progress: {completedCount}/{path.questions.length}
+                    </span>
+                    <div className="w-32 h-2 bg-[#45475a] border border-[#585b70]">
+                      <div
+                        className="h-full bg-[#a6e3a1] transition-all duration-300"
                         style={{
-                          color: colors.text,
-                          textDecoration: completedQuestions.has(
-                            question.question_id
-                          )
-                            ? "line-through"
-                            : "none",
+                          width: `${
+                            path.questions.length > 0
+                              ? (completedCount / path.questions.length) * 100
+                              : 0
+                          }%`,
                         }}
-                      >
-                        {question.title}
-                      </h3>
-                      <div className="flex gap-2">
-                        <span
-                          className="px-2 py-1 text-xs font-bold rounded"
-                          style={{
-                            backgroundColor: getDifficultyColor(
-                              question.difficulty
-                            ),
-                            color: colors.base,
-                          }}
-                        >
-                          {question.difficulty}
-                        </span>
-                        <span
-                          className="px-2 py-1 text-xs rounded"
-                          style={{
-                            backgroundColor: colors.warning,
-                            color: colors.base,
-                          }}
-                        >
-                          {question.estimated_minutes} min
-                        </span>
-                        <span
-                          className="px-2 py-1 text-xs rounded"
-                          style={{
-                            backgroundColor: colors.accent,
-                            color: colors.base,
-                          }}
-                        >
-                          {getImportanceStars(question.importance)}
-                        </span>
-                      </div>
+                      />
                     </div>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        setExpandedQuestion(
-                          expandedQuestion === question.question_id
-                            ? null
-                            : question.question_id
-                        )
-                      }
-                      className="px-3 py-1 text-sm border hover:bg-opacity-80"
-                      style={{
-                        backgroundColor: colors.purple,
-                        color: colors.base,
-                        border: `1px solid ${colors.purple}`,
-                      }}
-                    >
-                      {expandedQuestion === question.question_id
-                        ? "[COLLAPSE]"
-                        : "[DETAILS]"}
-                    </button>
-                    <a
-                      href={question.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 text-sm border hover:bg-opacity-80"
-                      style={{
-                        backgroundColor: colors.pink,
-                        color: colors.base,
-                        border: `1px solid ${colors.pink}`,
-                      }}
-                    >
-                      [SOLVE_ON_LEETCODE]
-                    </a>
-                  </div>
                 </div>
+              </div>
 
-                {/* Expanded Details */}
-                {expandedQuestion === question.question_id && (
-                  <div
-                    className="mt-4 p-4 border-2"
-                    style={{
-                      backgroundColor: colors.overlay,
-                      border: `2px solid ${colors.overlay}`,
-                    }}
-                  >
-                    {question.notes && (
-                      <div className="mb-4">
-                        <h4
-                          className="font-bold mb-2"
-                          style={{ color: colors.accent }}
-                        >
-                          [NOTES]
-                        </h4>
-                        <p style={{ color: colors.text }}>{question.notes}</p>
-                      </div>
-                    )}
-
-                    {question.tags && question.tags.length > 0 && (
-                      <div className="mb-4">
-                        <h4
-                          className="font-bold mb-2"
-                          style={{ color: colors.accent }}
-                        >
-                          [TAGS]
-                        </h4>
-                        <div className="flex flex-wrap gap-1">
-                          {question.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 text-xs rounded"
-                              style={{
-                                backgroundColor: colors.purple,
-                                color: colors.base,
-                              }}
-                            >
-                              {tag}
-                            </span>
-                          ))}
+              {/* Questions List */}
+              <div className="flex-1">
+                <div className="space-y-4">
+                  {path.questions.map((question, index) => (
+                    <div
+                      key={question.question_id}
+                      className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#45475a] p-6 shadow-[4px_4px_0px_0px_#11111b] hover:shadow-[6px_6px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <span className="text-lg font-mono font-bold text-[#89b4fa]">
+                            #{index + 1}
+                          </span>
+                          <span
+                            className={`px-3 py-1 text-xs font-mono font-bold border-2 ${getDifficultyColor(
+                              question.difficulty
+                            )}`}
+                          >
+                            [{question.difficulty.toUpperCase()}]
+                          </span>
+                          <span className="text-sm font-mono text-[#a6adc8]">
+                            #{question.leetcode_id}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {completedQuestions.has(question.question_id) && (
+                            <span className="text-[#a6e3a1] text-xl">✓</span>
+                          )}
                         </div>
                       </div>
-                    )}
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <h4
-                          className="font-bold text-sm"
-                          style={{ color: colors.accent }}
-                        >
-                          [LEETCODE_ID]
-                        </h4>
-                        <span style={{ color: colors.text }}>
-                          #{question.leetcode_id}
-                        </span>
+                      <h3 className="text-xl font-mono font-bold text-[#cdd6f4] tracking-wider mb-3">
+                        {question.title}
+                      </h3>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {question.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 text-xs font-mono bg-[#45475a] text-[#cdd6f4] border border-[#585b70]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
                       </div>
-                      <div>
-                        <h4
-                          className="font-bold text-sm"
-                          style={{ color: colors.accent }}
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          {completedQuestions.has(question.question_id) && (
+                            <span className="text-sm font-mono text-[#a6e3a1]">
+                              Completed
+                            </span>
+                          )}
+                        </div>
+                        <a
+                          href={question.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#89b4fa] hover:bg-[#74c7ec] text-[#1e1e2e] px-4 py-2 font-mono font-bold border-2 border-[#89b4fa] hover:border-[#74c7ec] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b] hover:shadow-[4px_4px_0px_0px_#11111b] hover:translate-x-[-2px] hover:translate-y-[-2px]"
                         >
-                          [ESTIMATED_TIME]
-                        </h4>
-                        <span style={{ color: colors.text }}>
-                          {question.estimated_minutes} minutes
-                        </span>
-                      </div>
-                      <div>
-                        <h4
-                          className="font-bold text-sm"
-                          style={{ color: colors.accent }}
-                        >
-                          [IMPORTANCE]
-                        </h4>
-                        <span style={{ color: colors.text }}>
-                          {getImportanceStars(question.importance)}
-                        </span>
+                          [SOLVE]
+                        </a>
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-
-          {path.questions.length === 0 && (
-            <div className="text-center py-12" style={{ color: colors.text }}>
-              <div className="text-xl font-bold mb-2">
-                [NO_QUESTIONS_AVAILABLE]
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center bg-[#313244]/80 backdrop-blur-sm border-4 border-[#f38ba8] p-8 shadow-[4px_4px_0px_0px_#11111b]">
+                <h2 className="text-2xl font-mono font-bold text-[#f38ba8] tracking-wider mb-4">
+                  [PATH_NOT_FOUND]
+                </h2>
+                <p className="text-lg font-mono text-[#a6adc8] tracking-wide">
+                  &gt; The requested learning path could not be found.
+                </p>
               </div>
-              <div>This path doesn&apos;t have any questions yet.</div>
             </div>
           )}
-        </div>
+        </main>
       </div>
-    </div>
+
+      <Footer />
+    </ThreadsBackground>
   );
 }

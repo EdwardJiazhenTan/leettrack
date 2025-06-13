@@ -313,107 +313,110 @@ export default function RecentSubmissions({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {submissions.slice(0, 10).map((submission, index) => (
-            <div
-              key={`${submission.titleSlug}-${submission.timestamp}-${index}`}
-              className="p-4 transition-all duration-300 hover:scale-[1.02]"
-              style={{
-                backgroundColor: "#181825",
-                border: `2px solid ${getStatusColor(submission.status)}`,
-                boxShadow: "2px 2px 0px #11111b",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform =
-                  "translate(-1px, -1px) scale(1.02)";
-                e.currentTarget.style.boxShadow = "3px 3px 0px #11111b";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform =
-                  "translate(0px, 0px) scale(1)";
-                e.currentTarget.style.boxShadow = "2px 2px 0px #11111b";
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">
-                    {getStatusIcon(submission.status)}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4
-                        className="font-mono font-semibold text-sm tracking-wide"
-                        style={{ color: "#cdd6f4" }}
-                      >
-                        {submission.title}
-                      </h4>
-                      <span
-                        className="text-xs font-mono px-2 py-1 border"
-                        style={{
-                          color: getStatusColor(submission.status),
-                          borderColor: getStatusColor(submission.status),
-                          backgroundColor: `${getStatusColor(
-                            submission.status
-                          )}20`,
-                        }}
-                      >
-                        {submission.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1">
-                      <span
-                        className="text-xs font-mono tracking-wide"
-                        style={{ color: "#6c7086" }}
-                      >
-                        {">"} lang:{" "}
-                        <span style={{ color: "#f9e2af" }}>
-                          {submission.language}
+        <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-track-[#313244] scrollbar-thumb-[#45475a] hover:scrollbar-thumb-[#585b70]">
+          <div className="space-y-3 pr-2">
+            {submissions.map((submission, index) => (
+              <div
+                key={`${submission.titleSlug}-${submission.timestamp}-${index}`}
+                className="p-4 transition-all duration-300 hover:scale-[1.02]"
+                style={{
+                  backgroundColor: "#181825",
+                  border: `2px solid ${getStatusColor(submission.status)}`,
+                  boxShadow: "2px 2px 0px #11111b",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform =
+                    "translate(-1px, -1px) scale(1.02)";
+                  e.currentTarget.style.boxShadow = "3px 3px 0px #11111b";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform =
+                    "translate(0px, 0px) scale(1)";
+                  e.currentTarget.style.boxShadow = "2px 2px 0px #11111b";
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">
+                      {getStatusIcon(submission.status)}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4
+                          className="font-mono font-semibold text-sm tracking-wide"
+                          style={{ color: "#cdd6f4" }}
+                        >
+                          {submission.title}
+                        </h4>
+                        <span
+                          className="text-xs font-mono px-2 py-1 border"
+                          style={{
+                            color: getStatusColor(submission.status),
+                            borderColor: getStatusColor(submission.status),
+                            backgroundColor: `${getStatusColor(
+                              submission.status
+                            )}20`,
+                          }}
+                        >
+                          {submission.status.toUpperCase()}
                         </span>
-                      </span>
-                      <span
-                        className="text-xs font-mono tracking-wide"
-                        style={{ color: "#6c7086" }}
-                      >
-                        {">"} date:{" "}
-                        <span style={{ color: "#89b4fa" }}>
-                          {formatDate(submission.date)}
+                      </div>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span
+                          className="text-xs font-mono tracking-wide"
+                          style={{ color: "#6c7086" }}
+                        >
+                          {">"} lang:{" "}
+                          <span style={{ color: "#f9e2af" }}>
+                            {submission.language}
+                          </span>
                         </span>
-                      </span>
+                        <span
+                          className="text-xs font-mono tracking-wide"
+                          style={{ color: "#6c7086" }}
+                        >
+                          {">"} date:{" "}
+                          <span style={{ color: "#89b4fa" }}>
+                            {formatDate(submission.date)}
+                          </span>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {submission.url && (
-                  <a
-                    href={submission.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 text-xs font-mono font-bold tracking-wide transition-all duration-200"
-                    style={{
-                      color: "#1e1e2e",
-                      backgroundColor: "#89b4fa",
-                      border: "2px solid #89b4fa",
-                      boxShadow: "2px 2px 0px #11111b",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#74c7ec";
-                      e.currentTarget.style.borderColor = "#74c7ec";
-                      e.currentTarget.style.transform = "translate(-1px, -1px)";
-                      e.currentTarget.style.boxShadow = "3px 3px 0px #11111b";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#89b4fa";
-                      e.currentTarget.style.borderColor = "#89b4fa";
-                      e.currentTarget.style.transform = "translate(0px, 0px)";
-                      e.currentTarget.style.boxShadow = "2px 2px 0px #11111b";
-                    }}
-                  >
-                    [VIEW]
-                  </a>
-                )}
+                  {submission.url && (
+                    <a
+                      href={submission.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 text-xs font-mono font-bold tracking-wide transition-all duration-200"
+                      style={{
+                        color: "#1e1e2e",
+                        backgroundColor: "#89b4fa",
+                        border: "2px solid #89b4fa",
+                        boxShadow: "2px 2px 0px #11111b",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#74c7ec";
+                        e.currentTarget.style.borderColor = "#74c7ec";
+                        e.currentTarget.style.transform =
+                          "translate(-1px, -1px)";
+                        e.currentTarget.style.boxShadow = "3px 3px 0px #11111b";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#89b4fa";
+                        e.currentTarget.style.borderColor = "#89b4fa";
+                        e.currentTarget.style.transform = "translate(0px, 0px)";
+                        e.currentTarget.style.boxShadow = "2px 2px 0px #11111b";
+                      }}
+                    >
+                      [VIEW]
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

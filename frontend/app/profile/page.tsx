@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import ThreadsBackground from "../components/ThreadsBackground";
+import Footer from "../components/Footer";
 import StatsOverview from "../components/charts/StatsOverview";
 import DifficultyChart from "../components/charts/DifficultyChart";
 import LanguageChart from "../components/charts/LanguageChart";
@@ -11,6 +13,7 @@ import RecentSubmissions from "../components/charts/RecentSubmissions";
 import ReviewRating from "../components/ReviewRating";
 import DashboardSummary from "../components/DashboardSummary";
 import UserSettings from "../components/UserSettings";
+import ProgressBar from "../components/ProgressBar";
 
 interface ProfileStats {
   status: string;
@@ -91,6 +94,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<string>("stats");
 
   // Toggle states for expandable sections
+  const [showTodaysStudyPlan, setShowTodaysStudyPlan] = useState(true); // Open by default
+  const [showStatsOverview, setShowStatsOverview] = useState(false);
+  const [showDifficultyChart, setShowDifficultyChart] = useState(false);
   const [showLanguageStats, setShowLanguageStats] = useState(false);
   const [showRecentSubmissions, setShowRecentSubmissions] = useState(false);
 
@@ -282,18 +288,19 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#1e1e2e]">
+      <ThreadsBackground className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center py-12">
-            <div className="bg-[#313244] border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b] inline-block">
-              <p className="text-xl font-mono text-[#cdd6f4] tracking-wider">
-                [LOADING_PROFILE_DATA...]
-              </p>
-            </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-[#313244]/80 backdrop-blur-sm border-4 border-[#45475a] p-8 shadow-[4px_4px_0px_0px_#11111b]">
+            <ProgressBar
+              text="LOADING_PROFILE_DATA"
+              duration={1800}
+              showPercentage={true}
+            />
           </div>
         </div>
-      </div>
+        <Footer />
+      </ThreadsBackground>
     );
   }
 
@@ -340,10 +347,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1e1e2e]">
+    <ThreadsBackground className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="mb-6 bg-[#313244] border-4 border-[#89b4fa] p-6 shadow-[4px_4px_0px_0px_#11111b]">
@@ -402,99 +409,258 @@ export default function ProfilePage() {
 
         {/* Tab Content */}
         {activeTab === "stats" && (
-          <div className="space-y-8">
-            {/* Today's Study Plan */}
-            <DashboardSummary />
-
-            {/* Primary Stats - Stats Overview and Difficulty Breakdown */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {/* Stats Overview */}
-              <div>
-                <StatsOverview stats={stats.leetcodeStats.solvingStats} />
-              </div>
-
-              {/* Difficulty Chart */}
-              <div>
-                <DifficultyChart
-                  stats={stats.leetcodeStats.difficultyProgress}
-                />
+          <div className="space-y-4">
+            {/* Today's Study Plan - Open by default */}
+            <div className="bg-[#313244] border-4 border-[#89b4fa] shadow-[4px_4px_0px_0px_#11111b] overflow-hidden">
+              <button
+                onClick={() => setShowTodaysStudyPlan(!showTodaysStudyPlan)}
+                className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📋</span>
+                    <h3 className="text-xl font-mono font-bold text-[#89b4fa] tracking-wider">
+                      [TODAY&apos;S_STUDY_PLAN]
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[#a6adc8]">
+                      Daily tasks
+                    </span>
+                    <span
+                      className={`text-2xl transition-transform duration-300 ease-in-out ${
+                        showTodaysStudyPlan ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </div>
+                </div>
+              </button>
+              <div
+                className={`border-t-2 border-[#45475a] transition-all duration-500 ease-in-out ${
+                  showTodaysStudyPlan
+                    ? "max-h-[800px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+                style={{
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  className={`p-6 transition-all duration-300 ease-in-out ${
+                    showTodaysStudyPlan
+                      ? "transform translate-y-0"
+                      : "transform -translate-y-4"
+                  }`}
+                >
+                  <DashboardSummary />
+                </div>
               </div>
             </div>
 
-            {/* Toggleable Sections */}
-            <div className="space-y-4">
-              {/* Language Statistics Toggle */}
-              <div className="bg-[#313244] border-4 border-[#cba6f7] shadow-[4px_4px_0px_0px_#11111b]">
-                <button
-                  onClick={() => setShowLanguageStats(!showLanguageStats)}
-                  className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+            {/* Stats Overview */}
+            <div className="bg-[#313244] border-4 border-[#a6e3a1] shadow-[4px_4px_0px_0px_#11111b] overflow-hidden">
+              <button
+                onClick={() => setShowStatsOverview(!showStatsOverview)}
+                className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📊</span>
+                    <h3 className="text-xl font-mono font-bold text-[#a6e3a1] tracking-wider">
+                      [STATS_OVERVIEW]
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[#a6adc8]">
+                      {stats.leetcodeStats.solvingStats.totalSolved} solved
+                    </span>
+                    <span
+                      className={`text-2xl transition-transform duration-300 ease-in-out ${
+                        showStatsOverview ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </div>
+                </div>
+              </button>
+              <div
+                className={`border-t-2 border-[#45475a] transition-all duration-500 ease-in-out ${
+                  showStatsOverview
+                    ? "max-h-[800px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+                style={{
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  className={`p-6 transition-all duration-300 ease-in-out ${
+                    showStatsOverview
+                      ? "transform translate-y-0"
+                      : "transform -translate-y-4"
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">💻</span>
-                      <h3 className="text-xl font-mono font-bold text-[#cba6f7] tracking-wider">
-                        [LANGUAGE_STATISTICS]
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono text-[#a6adc8]">
-                        {stats.leetcodeStats.languageStats.uniqueLanguages}{" "}
-                        languages
-                      </span>
-                      <span
-                        className={`text-2xl transition-transform duration-200 ${
-                          showLanguageStats ? "rotate-180" : ""
-                        }`}
-                      >
-                        ⌄
-                      </span>
-                    </div>
-                  </div>
-                </button>
-                {showLanguageStats && (
-                  <div className="border-t-2 border-[#45475a] p-6">
-                    <LanguageChart stats={stats.leetcodeStats.languageStats} />
-                  </div>
-                )}
+                  <StatsOverview stats={stats.leetcodeStats.solvingStats} />
+                </div>
               </div>
+            </div>
 
-              {/* Recent Submissions Toggle */}
-              <div className="bg-[#313244] border-4 border-[#fab387] shadow-[4px_4px_0px_0px_#11111b]">
-                <button
-                  onClick={() =>
-                    setShowRecentSubmissions(!showRecentSubmissions)
-                  }
-                  className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+            {/* Difficulty Chart */}
+            <div className="bg-[#313244] border-4 border-[#f38ba8] shadow-[4px_4px_0px_0px_#11111b] overflow-hidden">
+              <button
+                onClick={() => setShowDifficultyChart(!showDifficultyChart)}
+                className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📈</span>
+                    <h3 className="text-xl font-mono font-bold text-[#f38ba8] tracking-wider">
+                      [DIFFICULTY_BREAKDOWN]
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[#a6adc8]">
+                      {Math.round(
+                        stats.leetcodeStats.difficultyProgress.overall
+                          .percentage
+                      )}
+                      % overall
+                    </span>
+                    <span
+                      className={`text-2xl transition-transform duration-300 ease-in-out ${
+                        showDifficultyChart ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </div>
+                </div>
+              </button>
+              <div
+                className={`border-t-2 border-[#45475a] transition-all duration-500 ease-in-out ${
+                  showDifficultyChart
+                    ? "max-h-[800px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+                style={{
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  className={`p-6 transition-all duration-300 ease-in-out ${
+                    showDifficultyChart
+                      ? "transform translate-y-0"
+                      : "transform -translate-y-4"
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📝</span>
-                      <h3 className="text-xl font-mono font-bold text-[#fab387] tracking-wider">
-                        [RECENT_SUBMISSIONS]
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono text-[#a6adc8]">
-                        {stats.leetcodeStats.recentSubmissions.length}{" "}
-                        submissions
-                      </span>
-                      <span
-                        className={`text-2xl transition-transform duration-200 ${
-                          showRecentSubmissions ? "rotate-180" : ""
-                        }`}
-                      >
-                        ⌄
-                      </span>
-                    </div>
+                  <DifficultyChart
+                    stats={stats.leetcodeStats.difficultyProgress}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Language Statistics Toggle */}
+            <div className="bg-[#313244] border-4 border-[#cba6f7] shadow-[4px_4px_0px_0px_#11111b] overflow-hidden">
+              <button
+                onClick={() => setShowLanguageStats(!showLanguageStats)}
+                className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💻</span>
+                    <h3 className="text-xl font-mono font-bold text-[#cba6f7] tracking-wider">
+                      [LANGUAGE_STATISTICS]
+                    </h3>
                   </div>
-                </button>
-                {showRecentSubmissions && (
-                  <div className="border-t-2 border-[#45475a] p-6">
-                    <RecentSubmissions
-                      submissions={stats.leetcodeStats.recentSubmissions}
-                    />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[#a6adc8]">
+                      {stats.leetcodeStats.languageStats.uniqueLanguages}{" "}
+                      languages
+                    </span>
+                    <span
+                      className={`text-2xl transition-transform duration-300 ease-in-out ${
+                        showLanguageStats ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
                   </div>
-                )}
+                </div>
+              </button>
+              <div
+                className={`border-t-2 border-[#45475a] transition-all duration-500 ease-in-out ${
+                  showLanguageStats
+                    ? "max-h-[800px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+                style={{
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  className={`p-6 transition-all duration-300 ease-in-out ${
+                    showLanguageStats
+                      ? "transform translate-y-0"
+                      : "transform -translate-y-4"
+                  }`}
+                >
+                  <LanguageChart stats={stats.leetcodeStats.languageStats} />
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Submissions Toggle */}
+            <div className="bg-[#313244] border-4 border-[#fab387] shadow-[4px_4px_0px_0px_#11111b] overflow-hidden">
+              <button
+                onClick={() => setShowRecentSubmissions(!showRecentSubmissions)}
+                className="w-full p-6 text-left hover:bg-[#45475a] transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📝</span>
+                    <h3 className="text-xl font-mono font-bold text-[#fab387] tracking-wider">
+                      [RECENT_SUBMISSIONS]
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono text-[#a6adc8]">
+                      {stats.leetcodeStats.recentSubmissions.length} submissions
+                    </span>
+                    <span
+                      className={`text-2xl transition-transform duration-300 ease-in-out ${
+                        showRecentSubmissions ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </div>
+                </div>
+              </button>
+              <div
+                className={`border-t-2 border-[#45475a] transition-all duration-500 ease-in-out ${
+                  showRecentSubmissions
+                    ? "max-h-[1000px] opacity-100"
+                    : "max-h-0 opacity-0"
+                }`}
+                style={{
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  className={`p-6 transition-all duration-300 ease-in-out ${
+                    showRecentSubmissions
+                      ? "transform translate-y-0"
+                      : "transform -translate-y-4"
+                  }`}
+                >
+                  <RecentSubmissions
+                    submissions={stats.leetcodeStats.recentSubmissions}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -559,7 +725,9 @@ export default function ProfilePage() {
             />
           </div>
         )}
-      </div>
-    </div>
+      </main>
+
+      <Footer />
+    </ThreadsBackground>
   );
 }
