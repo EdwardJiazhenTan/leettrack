@@ -19,6 +19,23 @@ A comprehensive LeetCode progress tracking and learning path management system w
 - **Admin Management**: Full CRUD operations with drag-and-drop question reordering
 - **Scalable Architecture**: Template-based path creation system
 
+## 📸 Screenshots
+
+### Homepage - Welcome Interface
+
+![Homepage Screenshot](screenshots/screenshots1.png)
+_Clean, terminal-inspired homepage with cyberpunk aesthetics and intuitive navigation_
+
+### Learning Paths - Structured Learning
+
+![Learning Paths Screenshot](screenshots/screenshot2.png)
+_Comprehensive learning paths with company-specific, topic-based, and pattern-focused tracks_
+
+### Profile Dashboard - Progress Tracking
+
+![Profile Dashboard Screenshot](screenshots/screenshot3.png)
+_Detailed progress analytics with beautiful visualizations and performance metrics_
+
 ## 🎯 Learning Path Categories
 
 ### 🏢 Company Interview Preparation
