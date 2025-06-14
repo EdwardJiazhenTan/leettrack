@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl } from "../config/api";
 
 interface UserSettingsProps {
   currentUsername: string;
@@ -40,19 +41,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/user/settings",
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            leetcode_username: leetcodeUsername.trim(),
-          }),
-        }
-      );
+      const response = await fetch(getApiUrl("/api/v1/auth/user/settings"), {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          leetcode_username: leetcodeUsername.trim(),
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

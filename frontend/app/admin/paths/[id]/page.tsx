@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
+import { getApiUrl } from "../../../config/api";
 
 interface Question {
   sequence_number: number;
@@ -69,12 +70,9 @@ export default function PathEditor() {
   const fetchPath = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `http://localhost:5000/api/v1/learning-paths/${pathId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(getApiUrl(`/api/v1/learning-paths/${pathId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!res.ok) throw new Error("Failed to fetch path");
 
@@ -94,7 +92,7 @@ export default function PathEditor() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}`,
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
         {
           method: "PUT",
           headers: {
@@ -129,7 +127,7 @@ export default function PathEditor() {
         Math.max(0, ...path.questions.map((q) => q.sequence_number)) + 1;
 
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}/questions`,
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions`),
         {
           method: "POST",
           headers: {
@@ -171,7 +169,9 @@ export default function PathEditor() {
       if (!pathQuestion) return;
 
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`, // Using sequence_number as path_question_id for now
+        getApiUrl(
+          `/api/v1/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`
+        ), // Using sequence_number as path_question_id for now
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -199,7 +199,7 @@ export default function PathEditor() {
       }));
 
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}/questions/reorder`,
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions/reorder`),
         {
           method: "PUT",
           headers: {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl } from "../config/api";
 
 interface LearningPath {
   path_id: number;
@@ -58,12 +59,9 @@ export default function AdminDashboard() {
   const fetchPaths = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        "http://localhost:5000/api/v1/admin/learning-paths",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!res.ok) throw new Error("Failed to fetch paths");
 
@@ -81,7 +79,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        "http://localhost:5000/api/v1/admin/learning-paths/bulk-create",
+        getApiUrl("/api/v1/admin/learning-paths/bulk-create"),
         {
           method: "POST",
           headers: {
@@ -110,7 +108,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}`,
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
         {
           method: "PUT",
           headers: {
@@ -138,7 +136,7 @@ export default function AdminDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/learning-paths/${pathId}`,
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

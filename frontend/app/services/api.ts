@@ -2,9 +2,9 @@
  * API service for making requests to the backend
  */
 
-// Use environment variable for API URL if available, or default to localhost
+// Use environment variable for API URL if available, or default to EC2 server
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || "http://44.205.249.75:5000/api/v1";
 
 export type ApiResponse<T> = {
   data: T | null;

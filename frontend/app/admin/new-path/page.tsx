@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
+import { getApiUrl } from "../../config/api";
 
 export default function NewPathPage() {
   const router = useRouter();
@@ -37,23 +38,20 @@ export default function NewPathPage() {
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/v1/admin/learning-paths",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...form,
-            tags: form.tags
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          }),
-        }
-      );
+      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...form,
+          tags: form.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+        }),
+      });
 
       const data = await res.json();
       if (res.ok) {

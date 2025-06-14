@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { getApiUrl } from "../../config/api";
 
 interface Submission {
   title: string;
@@ -62,7 +63,7 @@ export default function RecentSubmissions({
       if (!token) return;
 
       const response = await fetch(
-        "http://localhost:5000/api/v1/auth/user/recent-submissions/need-rating",
+        getApiUrl("/api/v1/auth/user/recent-submissions/need-rating"),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -94,7 +95,7 @@ export default function RecentSubmissions({
       if (!token) return;
 
       const response = await fetch(
-        `http://localhost:5000/api/v1/auth/user/questions/${userQuestionId}/rate`,
+        getApiUrl(`/api/v1/auth/user/questions/${userQuestionId}/rate`),
         {
           method: "POST",
           headers: {

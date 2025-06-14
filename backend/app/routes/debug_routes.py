@@ -8,6 +8,7 @@ from app.models.learning_path import LearningPath
 from app.models.path_question import PathQuestion
 from app.models.user_learning_path import UserLearningPath
 from app.models.user_path_question import UserPathQuestion
+from app.utils.security import admin_required
 from app import db
 import logging
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 debug = Blueprint('debug', __name__, url_prefix='/api/v1/debug')
 
 @debug.route('/all-data', methods=['GET'])
+@admin_required
 def get_all_data():
     """Get all data from all database tables for testing purposes"""
     try:
@@ -164,6 +166,7 @@ def get_all_data():
         }), 500
 
 @debug.route('/tables', methods=['GET'])
+@admin_required
 def get_table_info():
     """Get information about all database tables"""
     try:

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl } from "../config/api";
 import Navbar from "../components/Navbar";
 import ThreadsBackground from "../components/ThreadsBackground";
 import Footer from "../components/Footer";
@@ -59,7 +60,7 @@ const ReviewsPage: React.FC = () => {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/v1/auth/user/reviews/today",
+        getApiUrl("/api/v1/auth/user/reviews/today"),
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { getApiUrl } from "../../config/api";
 import ThreadsBackground from "../../components/ThreadsBackground";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -53,7 +54,7 @@ export default function PathDetailPage() {
     const fetchPath = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/v1/learning-paths/${pathId}`
+          getApiUrl(`/api/v1/learning-paths/${pathId}`)
         );
         if (response.ok) {
           const data = await response.json();
