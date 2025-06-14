@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getApiUrl } from "../config/api";
 import ThreadsBackground from "../components/ThreadsBackground";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -38,9 +39,7 @@ export default function PathsPage() {
   useEffect(() => {
     const fetchPaths = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/v1/learning-paths"
-        );
+        const response = await fetch(getApiUrl("/api/v1/learning-paths"));
         if (response.ok) {
           const result = await response.json();
           if (result.status === "success") {

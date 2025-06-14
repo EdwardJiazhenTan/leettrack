@@ -6,18 +6,20 @@ const API_CONFIG = {
 
 // Get the current environment
 const getEnvironment = (): "development" | "production" => {
-  // In Next.js, we can use NODE_ENV or check if we're in browser
+  // In browser environment
   if (typeof window !== "undefined") {
-    // Browser environment - check hostname
+    // Check if we're on localhost
     if (
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1"
     ) {
       return "development";
     }
+    // If we're on any other domain (like Vercel), use production
+    return "production";
   }
 
-  // Server environment or production
+  // Server environment - use NODE_ENV
   return process.env.NODE_ENV === "development" ? "development" : "production";
 };
 
@@ -55,4 +57,9 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN_LEARNING_PATHS: "/api/v1/admin/learning-paths",
   ADMIN_LEARNING_PATHS_BULK_CREATE: "/api/v1/admin/learning-paths/bulk-create",
+};
+
+// For backward compatibility - export a simple function that other files can use
+export const getApiUrl = (endpoint: string): string => {
+  return buildApiUrl(endpoint);
 };
