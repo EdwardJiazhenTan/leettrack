@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { buildApiUrl, API_ENDPOINTS } from "../config/api";
 
 interface DashboardSummaryData {
   questions_needing_rating: number;
@@ -36,16 +37,12 @@ const DashboardSummary: React.FC<DashboardSummaryProps> = ({
         throw new Error("No authentication token found");
       }
 
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/user/dashboard/summary",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.USER_DASHBOARD), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch dashboard data");

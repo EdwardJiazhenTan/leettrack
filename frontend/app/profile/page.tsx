@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { buildApiUrl, API_ENDPOINTS } from "../config/api";
 import Navbar from "../components/Navbar";
 import ThreadsBackground from "../components/ThreadsBackground";
 import Footer from "../components/Footer";
@@ -131,7 +132,7 @@ function ProfilePageContent() {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/v1/leetcode/profile/stats",
+          buildApiUrl(API_ENDPOINTS.LEETCODE_PROFILE_STATS),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -173,7 +174,7 @@ function ProfilePageContent() {
       if (!token) return;
 
       const response = await fetch(
-        "http://localhost:5000/api/v1/auth/user/questions/need-rating",
+        buildApiUrl(API_ENDPOINTS.USER_QUESTIONS_NEED_RATING),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -207,7 +208,7 @@ function ProfilePageContent() {
       if (!token) return;
 
       const response = await fetch(
-        `http://localhost:5000/api/v1/auth/user/questions/${userQuestionId}/rate`,
+        buildApiUrl(`/api/v1/auth/user/questions/${userQuestionId}/rate`),
         {
           method: "POST",
           headers: {
