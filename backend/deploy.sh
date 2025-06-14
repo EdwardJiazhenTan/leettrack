@@ -31,8 +31,9 @@ fi
 
 echo -e "${GREEN}✅ Found .env file${NC}"
 
-# Load environment variables
-export $(cat .env | xargs)
+# Load environment variables (filter out comments and empty lines)
+echo -e "${YELLOW}📝 Loading environment variables...${NC}"
+export $(grep -v '^#' .env | grep -v '^$' | xargs)
 
 # Create virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
