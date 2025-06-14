@@ -1,36 +1,16 @@
-// API Configuration
-const API_CONFIG = {
-  development: "http://localhost:5000",
-  production: "http://44.205.249.75:5000",
-};
-
-// Get the current environment
-const getEnvironment = (): "development" | "production" => {
-  // In browser environment
-  if (typeof window !== "undefined") {
-    // Check if we're on localhost
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "development";
-    }
-    // If we're on any other domain (like Vercel), use production
-    return "production";
-  }
-
-  // Server environment - use NODE_ENV
-  return process.env.NODE_ENV === "development" ? "development" : "production";
-};
-
-// Export the API base URL
-export const API_BASE_URL = API_CONFIG[getEnvironment()];
+// API Configuration - Use Next.js environment variable
+export const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:5000";
 
 // Helper function to build API URLs
 export const buildApiUrl = (endpoint: string): string => {
   // Remove leading slash if present
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
   return `${API_BASE_URL}/${cleanEndpoint}`;
+};
+
+// For backward compatibility - export a simple function that other files can use
+export const getApiUrl = (endpoint: string): string => {
+  return buildApiUrl(endpoint);
 };
 
 // Common API endpoints
@@ -57,9 +37,4 @@ export const API_ENDPOINTS = {
   // Admin
   ADMIN_LEARNING_PATHS: "/api/v1/admin/learning-paths",
   ADMIN_LEARNING_PATHS_BULK_CREATE: "/api/v1/admin/learning-paths/bulk-create",
-};
-
-// For backward compatibility - export a simple function that other files can use
-export const getApiUrl = (endpoint: string): string => {
-  return buildApiUrl(endpoint);
 };
