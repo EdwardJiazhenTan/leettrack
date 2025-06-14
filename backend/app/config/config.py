@@ -111,8 +111,17 @@ class ProductionConfig(Config):
     SECRET_KEY = os.environ.get('SECRET_KEY')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     
-    # Database configuration - use environment variable for full URL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    # Database configuration - prefer DATABASE_URL, fall back to individual components
+    if os.environ.get('DATABASE_URL'):
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    else:
+        # Fall back to individual database components (inherited from base Config)
+        DB_USERNAME = os.environ.get('DB_USERNAME', 'ed')
+        DB_PASSWORD = os.environ.get('DB_PASSWORD', 'your_password_here')
+        DB_HOST = os.environ.get('DB_HOST', 'database-1.ccri0seewfxp.us-east-1.rds.amazonaws.com')
+        DB_PORT = os.environ.get('DB_PORT', '5432')
+        DB_NAME = os.environ.get('DB_NAME', 'postgres')
+        SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     
     # Production logging
     LOG_LEVEL = 'INFO'
