@@ -42,6 +42,11 @@ def create_app(config_name='development'):
         cors_origins = os.environ.get('CORS_ORIGINS', '').split(',') if os.environ.get('CORS_ORIGINS') else []
         # Filter out empty strings
         cors_origins = [origin.strip() for origin in cors_origins if origin.strip()]
+        
+        # TEMPORARY: If no CORS_ORIGINS set, allow all (REMOVE IN PRODUCTION!)
+        if not cors_origins:
+            cors_origins = ["*"]
+            print("WARNING: CORS_ORIGINS not set, allowing all origins. This is insecure for production!")
     else:
         # Development: allow localhost
         cors_origins = ["http://localhost:3000"]
