@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
@@ -82,7 +82,7 @@ interface RatingData {
   confidence_levels: ConfidenceLevel[];
 }
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -729,5 +729,32 @@ export default function ProfilePage() {
 
       <Footer />
     </ThreadsBackground>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#1e1e2e] flex items-center justify-center">
+          <div className="bg-[#313244] border-4 border-[#cba6f7] p-8 shadow-[4px_4px_0px_0px_#11111b]">
+            <div className="animate-pulse">
+              <div className="text-center">
+                <div className="text-4xl mb-4">⚡</div>
+                <h3 className="text-xl font-mono font-bold text-[#cba6f7] mb-2 tracking-wider">
+                  [LOADING_PROFILE...]
+                </h3>
+                <div className="space-y-2">
+                  <div className="h-3 bg-[#45475a] w-32 mx-auto"></div>
+                  <div className="h-3 bg-[#45475a] w-24 mx-auto"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ProfilePageContent />
+    </Suspense>
   );
 }

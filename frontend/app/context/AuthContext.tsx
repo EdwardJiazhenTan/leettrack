@@ -1,24 +1,38 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { buildApiUrl, API_ENDPOINTS } from "../config/api";
 
 type User = {
-  id: number;
+  user_id: number;
   email: string;
   leetcode_username: string;
+  created_at: string;
+  last_login: string;
+  is_active: boolean;
   is_admin: boolean;
+};
+
+type LoginResult = {
+  success: boolean;
+  error?: string;
+};
+
+type RegisterResult = {
+  success: boolean;
+  error?: string;
 };
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   register: (
     email: string,
     password: string,
     leetcode_username: string
-  ) => Promise<void>;
+  ) => Promise<RegisterResult>;
   logout: () => void;
 };
 
@@ -28,129 +42,118 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored tokens and fetch user profile on mount
+  // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = async () => {
-      console.log("🔍 Starting authentication check...");
       const token = localStorage.getItem("accessToken");
-      console.log("🔑 Token found:", token ? "Yes" : "No");
-
       if (!token) {
-        console.log("🚫 No token found, user not authenticated");
         setIsLoading(false);
         return;
       }
 
       try {
-        console.log("📡 Fetching user profile from /api/v1/auth/me...");
-        // Request user profile with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        const response = await fetch("http://localhost:5000/api/v1/auth/me", {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.ME), {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
-          credentials: "include",
-          signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
-        console.log("📡 Response status:", response.status);
-
         if (response.ok) {
-          const data = await response.json();
-          console.log("✅ User data received:", data);
-          setUser(data);
+          const userData = await response.json();
+          setUser(userData.user);
         } else {
-          console.log("❌ Invalid token, clearing storage");
-          // Invalid token, clear storage
+          // Token is invalid, remove it
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
         }
       } catch (error) {
-        console.error("💥 Authentication check failed", error);
-        // Clear potentially invalid tokens on error
+        console.error("Auth check failed:", error);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+      } finally {
+        setIsLoading(false);
       }
-
-      console.log("✅ Setting isLoading to false");
-      setIsLoading(false);
     };
 
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     try {
-      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.LOGIN), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.status === "success") {
+        // Store tokens
         localStorage.setItem("accessToken", data.access_token);
         localStorage.setItem("refreshToken", data.refresh_token);
+
+        // Set user data
         setUser(data.user);
+
+        return { success: true };
       } else {
-        setError(data.message || "Login failed");
+        return {
+          success: false,
+          error: data.message || "Login failed",
+        };
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Server error, please try again later");
-    } finally {
-      setIsLoading(false);
+      return {
+        success: false,
+        error: "Network error. Please try again.",
+      };
     }
   };
 
   const register = async (
     email: string,
     password: string,
-    leetcode_username: string
-  ) => {
-    setIsLoading(true);
-    setError(null);
-
+    leetcodeUsername: string
+  ): Promise<RegisterResult> => {
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ email, password, leetcode_username }),
-        }
-      );
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.REGISTER), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          leetcode_username: leetcodeUsername,
+        }),
+      });
 
       const data = await response.json();
 
-      if (response.ok) {
-        localStorage.setItem("accessToken", data.access_token);
-        localStorage.setItem("refreshToken", data.refresh_token);
-        setUser(data.user);
+      if (response.ok && data.status === "success") {
+        return { success: true };
       } else {
-        setError(data.message || "Registration failed");
+        return {
+          success: false,
+          error: data.message || "Registration failed",
+        };
       }
     } catch (error) {
       console.error("Registration error:", error);
-      setError("Server error, please try again later");
-    } finally {
-      setIsLoading(false);
+      return {
+        success: false,
+        error: "Network error. Please try again.",
+      };
     }
   };
 
@@ -162,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, error, login, register, logout }}
+      value={{ user, isLoading, error: null, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>
