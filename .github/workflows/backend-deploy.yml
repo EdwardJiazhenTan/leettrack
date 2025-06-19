@@ -1,0 +1,234 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-deploy.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  test-and-lint:
+    name: Test & Code Quality
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest-xvfb  # For any GUI tests if needed
+
+      - name: Code formatting check (black)
+        working-directory: ./backend
+        run: |
+          black --check --diff .
+
+      - name: Lint code (flake8)
+        working-directory: ./backend
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Security scan (bandit)
+        working-directory: ./backend
+        run: |
+          pip install bandit
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . --severity-level medium
+
+      - name: Run tests with coverage
+        working-directory: ./backend
+        env:
+          FLASK_ENV: testing
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+          SECRET_KEY: test-secret-key-for-ci
+          JWT_SECRET_KEY: test-jwt-secret-key-for-ci
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing -v
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          directory: ./backend
+          flags: backend
+          name: backend-coverage
+
+  deploy-to-ec2:
+    name: Deploy to EC2
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            echo "🚀 Starting backend deployment..."
+            
+            # Navigate to project directory
+            cd /home/ubuntu/LeetTrack
+            
+            # Backup current version
+            cp -r backend backend_backup_$(date +%Y%m%d_%H%M%S) || echo "No previous version to backup"
+            
+            # Pull latest changes
+            echo "📥 Pulling latest changes..."
+            git pull origin main
+            
+            # Navigate to backend directory
+            cd backend
+            
+            # Activate virtual environment
+            source venv/bin/activate
+            
+            # Install/update dependencies
+            echo "📦 Installing dependencies..."
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            export FLASK_APP=app.py
+            flask db upgrade || echo "No migrations to run"
+            
+            # Test application startup
+            echo "🧪 Testing application..."
+            python -c "from wsgi import app; print('✅ Application imports successfully')"
+            
+            # Find and gracefully restart gunicorn
+            echo "🔄 Restarting application..."
+            
+            # Try systemd service first
+            if systemctl is-active --quiet leettrack-backend; then
+                echo "Restarting via systemd..."
+                sudo systemctl reload leettrack-backend
+            elif systemctl is-active --quiet gunicorn; then
+                echo "Restarting via systemd gunicorn..."
+                sudo systemctl reload gunicorn
+            else
+                # Fallback: find gunicorn process and send HUP signal
+                echo "Finding gunicorn process..."
+                GUNICORN_PID=$(pgrep -f "gunicorn.*wsgi:app" | head -1)
+                if [ ! -z "$GUNICORN_PID" ]; then
+                    echo "Sending HUP signal to gunicorn PID: $GUNICORN_PID"
+                    kill -HUP $GUNICORN_PID
+                else
+                    echo "No gunicorn process found, starting new one..."
+                    nohup gunicorn --config gunicorn.conf.py wsgi:app > gunicorn.log 2>&1 &
+                fi
+            fi
+            
+            # Wait for application to restart
+            echo "⏳ Waiting for application to restart..."
+            sleep 10
+            
+            echo "✅ Backend deployment completed!"
+          EOF
+
+      - name: Health check
+        run: |
+          echo "🏥 Running health check..."
+
+          # Wait a bit more for the service to be fully ready
+          sleep 15
+
+          # Test API endpoint
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://api.leettrack.app/api/health || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Health check passed! API is responding correctly."
+          else
+            echo "❌ Health check failed! HTTP Code: $HTTP_CODE"
+            echo "Attempting to check service status..."
+            
+            ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+              echo "Checking service status..."
+              systemctl status leettrack-backend || systemctl status gunicorn || echo "No systemd service found"
+              echo "Checking gunicorn processes..."
+              ps aux | grep gunicorn
+              echo "Checking recent logs..."
+              tail -20 /home/ubuntu/LeetTrack/backend/gunicorn.log || echo "No gunicorn.log found"
+            EOF
+            
+            exit 1
+          fi
+
+      - name: Deployment success notification
+        if: success()
+        run: |
+          echo "🎉 Backend deployment successful!"
+          echo "🌐 API URL: https://api.leettrack.app"
+          echo "📊 Health check: ✅ PASSED"
+          echo "⏰ Deployed at: $(date)"
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, attempting rollback..."
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF' || true
+            cd /home/ubuntu/LeetTrack
+            LATEST_BACKUP=$(ls -t backend_backup_* 2>/dev/null | head -1)
+            if [ ! -z "$LATEST_BACKUP" ]; then
+              echo "Rolling back to: $LATEST_BACKUP"
+              rm -rf backend
+              mv "$LATEST_BACKUP" backend
+              cd backend
+              source venv/bin/activate
+              # Restart with previous version
+              GUNICORN_PID=$(pgrep -f "gunicorn.*wsgi:app" | head -1)
+              if [ ! -z "$GUNICORN_PID" ]; then
+                kill -HUP $GUNICORN_PID
+              fi
+              echo "Rollback completed"
+            else
+              echo "No backup found for rollback"
+            fi
+          EOF

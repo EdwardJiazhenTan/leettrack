@@ -12,6 +12,23 @@ def index():
         'version': '1.0.0'
     })
 
+@main.route('/api/health')
+def health_check():
+    """Health check endpoint for CI/CD and monitoring"""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        db_status = 'healthy'
+    except Exception as e:
+        db_status = f'unhealthy: {str(e)}'
+    
+    return jsonify({
+        'status': 'healthy',
+        'message': 'LeetTrack API is running',
+        'database': db_status,
+        'version': '1.0.0'
+    })
+
 @main.route('/db-test')
 def db_test():
     """Test database connection"""
