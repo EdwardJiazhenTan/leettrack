@@ -7,6 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  deployments: write
+  statuses: write
+  pull-requests: write
+
 jobs:
   frontend-deploy:
     name: Test & Deploy Frontend
@@ -44,6 +50,7 @@ jobs:
       - name: Deploy to Vercel (main branch only)
         if: github.ref == 'refs/heads/main'
         uses: amondnet/vercel-action@v25
+        continue-on-error: false
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
