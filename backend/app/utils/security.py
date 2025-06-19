@@ -17,4 +17,4 @@ def admin_required(fn):
             return jsonify({"message": "Admin privileges required"}), 403
         return fn(*args, **kwargs)
 
-    return wrapper 
+    return wrapper

@@ -13,9 +13,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def create_learning_path(name, description, difficulty_level="Intermediate", 
-                        estimated_hours=None, tags=None, source="System", 
-                        creator_id=None, is_public=True):
+
+def create_learning_path(
+    name,
+    description,
+    difficulty_level="Intermediate",
+    estimated_hours=None,
+    tags=None,
+    source="System",
+    creator_id=None,
+    is_public=True,
+):
     """Create a new learning path"""
     try:
         learning_path = LearningPath(
@@ -26,62 +34,76 @@ def create_learning_path(name, description, difficulty_level="Intermediate",
             is_public=is_public,
             difficulty_level=difficulty_level,
             estimated_hours=estimated_hours,
-            tags=tags if isinstance(tags, str) else ','.join(tags) if tags else None,
+            tags=tags if isinstance(tags, str) else ",".join(tags) if tags else None,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
-            is_active=True
+            is_active=True,
         )
-        
+
         db.session.add(learning_path)
         db.session.commit()
-        
+
         logger.info(f"Created learning path: {name}")
         return learning_path
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating learning path {name}: {str(e)}")
         raise
 
-def add_question_to_path(path_id, question_title_slug, sequence_number, 
-                        notes=None, estimated_minutes=None, importance=3):
+
+def add_question_to_path(
+    path_id,
+    question_title_slug,
+    sequence_number,
+    notes=None,
+    estimated_minutes=None,
+    importance=3,
+):
     """Add a question to a learning path by fetching it from LeetCode"""
     try:
         # First, try to find the question in our database
-        question = Question.query.filter_by(title=question_title_slug.replace('-', ' ').title()).first()
-        
+        question = Question.query.filter_by(
+            title=question_title_slug.replace("-", " ").title()
+        ).first()
+
         # If not found, fetch from LeetCode GraphQL API
         if not question:
             logger.info(f"Fetching question from LeetCode: {question_title_slug}")
             problem_data = leetcode_client.get_problem_by_slug(question_title_slug)
-            
-            if 'error' in problem_data:
-                logger.error(f"Failed to fetch question {question_title_slug}: {problem_data['error']}")
+
+            if "error" in problem_data:
+                logger.error(
+                    f"Failed to fetch question {question_title_slug}: {problem_data['error']}"
+                )
                 return None
-            
+
             # Create new question in database
             question = Question(
-                leetcode_id=problem_data.get('questionId'),
-                title=problem_data.get('title'),
+                leetcode_id=problem_data.get("questionId"),
+                title=problem_data.get("title"),
                 url=f"https://leetcode.com/problems/{question_title_slug}/",
-                difficulty=problem_data.get('difficulty'),
-                description=problem_data.get('content'),
-                tags=','.join(tag.get('name', '') for tag in problem_data.get('topicTags', [])),
-                last_updated=datetime.utcnow()
+                difficulty=problem_data.get("difficulty"),
+                description=problem_data.get("content"),
+                tags=",".join(
+                    tag.get("name", "") for tag in problem_data.get("topicTags", [])
+                ),
+                last_updated=datetime.utcnow(),
             )
             db.session.add(question)
             db.session.flush()  # Get the question_id
-        
+
         # Check if question is already in the path
         existing = PathQuestion.query.filter_by(
-            path_id=path_id, 
-            question_id=question.question_id
+            path_id=path_id, question_id=question.question_id
         ).first()
-        
+
         if existing:
-            logger.warning(f"Question {question.title} already exists in path {path_id}")
+            logger.warning(
+                f"Question {question.title} already exists in path {path_id}"
+            )
             return existing
-        
+
         # Add question to path
         path_question = PathQuestion(
             path_id=path_id,
@@ -89,19 +111,22 @@ def add_question_to_path(path_id, question_title_slug, sequence_number,
             sequence_number=sequence_number,
             notes=notes,
             estimated_minutes=estimated_minutes,
-            importance=importance
+            importance=importance,
         )
-        
+
         db.session.add(path_question)
         db.session.commit()
-        
+
         logger.info(f"Added question {question.title} to path {path_id}")
         return path_question
-        
+
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error adding question {question_title_slug} to path {path_id}: {str(e)}")
+        logger.error(
+            f"Error adding question {question_title_slug} to path {path_id}: {str(e)}"
+        )
         raise
+
 
 def get_learning_path_with_questions(path_id):
     """Get a learning path with all its questions"""
@@ -109,35 +134,38 @@ def get_learning_path_with_questions(path_id):
         path = LearningPath.query.get(path_id)
         if not path:
             return None
-        
+
         # Get questions ordered by sequence
-        path_questions = db.session.query(PathQuestion, Question).join(
-            Question, PathQuestion.question_id == Question.question_id
-        ).filter(PathQuestion.path_id == path_id).order_by(
-            PathQuestion.sequence_number
-        ).all()
-        
+        path_questions = (
+            db.session.query(PathQuestion, Question)
+            .join(Question, PathQuestion.question_id == Question.question_id)
+            .filter(PathQuestion.path_id == path_id)
+            .order_by(PathQuestion.sequence_number)
+            .all()
+        )
+
         return {
-            'path': path,
-            'questions': [
+            "path": path,
+            "questions": [
                 {
-                    'sequence_number': pq.sequence_number,
-                    'question': q,
-                    'notes': pq.notes,
-                    'estimated_minutes': pq.estimated_minutes,
-                    'importance': pq.importance
+                    "sequence_number": pq.sequence_number,
+                    "question": q,
+                    "notes": pq.notes,
+                    "estimated_minutes": pq.estimated_minutes,
+                    "importance": pq.importance,
                 }
                 for pq, q in path_questions
-            ]
+            ],
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting learning path {path_id}: {str(e)}")
         raise
 
+
 def create_neetcode_75_path():
     """Create the NeetCode 75 learning path with all problems"""
-    
+
     # NeetCode 75 problems organized by category
     neetcode_75_problems = [
         # Array & Hashing
@@ -150,14 +178,12 @@ def create_neetcode_75_path():
         ("valid-sudoku", 7, "Array & Hashing", 30, 3),
         ("encode-and-decode-strings", 8, "Array & Hashing", 20, 4),
         ("longest-consecutive-sequence", 9, "Array & Hashing", 35, 4),
-        
         # Two Pointers
         ("valid-palindrome", 10, "Two Pointers", 15, 4),
         ("two-sum-ii-input-array-is-sorted", 11, "Two Pointers", 20, 4),
         ("3sum", 12, "Two Pointers", 35, 5),
         ("container-with-most-water", 13, "Two Pointers", 25, 4),
         ("trapping-rain-water", 14, "Two Pointers", 45, 5),
-        
         # Sliding Window
         ("best-time-to-buy-and-sell-stock", 15, "Sliding Window", 20, 5),
         ("longest-substring-without-repeating-characters", 16, "Sliding Window", 30, 5),
@@ -165,7 +191,6 @@ def create_neetcode_75_path():
         ("permutation-in-string", 18, "Sliding Window", 30, 4),
         ("minimum-window-substring", 19, "Sliding Window", 45, 5),
         ("sliding-window-maximum", 20, "Sliding Window", 40, 4),
-        
         # Stack
         ("valid-parentheses", 21, "Stack", 15, 5),
         ("min-stack", 22, "Stack", 25, 4),
@@ -174,7 +199,6 @@ def create_neetcode_75_path():
         ("daily-temperatures", 25, "Stack", 25, 4),
         ("car-fleet", 26, "Stack", 35, 3),
         ("largest-rectangle-in-histogram", 27, "Stack", 45, 4),
-        
         # Binary Search
         ("binary-search", 28, "Binary Search", 15, 5),
         ("search-a-2d-matrix", 29, "Binary Search", 20, 4),
@@ -183,7 +207,6 @@ def create_neetcode_75_path():
         ("search-in-rotated-sorted-array", 32, "Binary Search", 30, 5),
         ("time-based-key-value-store", 33, "Binary Search", 35, 3),
         ("median-of-two-sorted-arrays", 34, "Binary Search", 45, 5),
-        
         # Linked List
         ("reverse-linked-list", 35, "Linked List", 15, 5),
         ("merge-two-sorted-lists", 36, "Linked List", 20, 5),
@@ -196,7 +219,6 @@ def create_neetcode_75_path():
         ("lru-cache", 43, "Linked List", 40, 5),
         ("merge-k-sorted-lists", 44, "Linked List", 45, 5),
         ("reverse-nodes-in-k-group", 45, "Linked List", 45, 4),
-        
         # Trees
         ("invert-binary-tree", 46, "Trees", 15, 5),
         ("maximum-depth-of-binary-tree", 47, "Trees", 15, 4),
@@ -210,15 +232,19 @@ def create_neetcode_75_path():
         ("count-good-nodes-in-binary-tree", 55, "Trees", 25, 3),
         ("validate-binary-search-tree", 56, "Trees", 30, 5),
         ("kth-smallest-element-in-a-bst", 57, "Trees", 25, 4),
-        ("construct-binary-tree-from-preorder-and-inorder-traversal", 58, "Trees", 35, 4),
+        (
+            "construct-binary-tree-from-preorder-and-inorder-traversal",
+            58,
+            "Trees",
+            35,
+            4,
+        ),
         ("binary-tree-maximum-path-sum", 59, "Trees", 40, 5),
         ("serialize-and-deserialize-binary-tree", 60, "Trees", 45, 5),
-        
         # Tries
         ("implement-trie-prefix-tree", 61, "Tries", 30, 4),
         ("design-add-and-search-words-data-structure", 62, "Tries", 35, 4),
         ("word-search-ii", 63, "Tries", 45, 5),
-        
         # Heap / Priority Queue
         ("kth-largest-element-in-a-stream", 64, "Heap", 25, 3),
         ("last-stone-weight", 65, "Heap", 20, 3),
@@ -226,7 +252,6 @@ def create_neetcode_75_path():
         ("task-scheduler", 67, "Heap", 35, 4),
         ("design-twitter", 68, "Heap", 40, 3),
         ("find-median-from-data-stream", 69, "Heap", 40, 5),
-        
         # Backtracking
         ("subsets", 70, "Backtracking", 25, 5),
         ("combination-sum", 71, "Backtracking", 30, 4),
@@ -237,7 +262,6 @@ def create_neetcode_75_path():
         ("palindrome-partitioning", 76, "Backtracking", 35, 4),
         ("letter-combinations-of-a-phone-number", 77, "Backtracking", 25, 4),
         ("n-queens", 78, "Backtracking", 45, 4),
-        
         # Graphs
         ("number-of-islands", 79, "Graphs", 25, 5),
         ("clone-graph", 80, "Graphs", 30, 4),
@@ -252,7 +276,6 @@ def create_neetcode_75_path():
         ("number-of-connected-components-in-an-undirected-graph", 89, "Graphs", 25, 3),
         ("graph-valid-tree", 90, "Graphs", 30, 4),
         ("word-ladder", 91, "Graphs", 40, 4),
-        
         # Advanced Graphs
         ("reconstruct-itinerary", 92, "Advanced Graphs", 40, 3),
         ("min-cost-to-connect-all-points", 93, "Advanced Graphs", 35, 4),
@@ -260,7 +283,6 @@ def create_neetcode_75_path():
         ("swim-in-rising-water", 95, "Advanced Graphs", 40, 4),
         ("alien-dictionary", 96, "Advanced Graphs", 45, 5),
         ("cheapest-flights-within-k-stops", 97, "Advanced Graphs", 40, 4),
-        
         # 1-D Dynamic Programming
         ("climbing-stairs", 98, "1-D DP", 15, 5),
         ("min-cost-climbing-stairs", 99, "1-D DP", 20, 4),
@@ -274,7 +296,6 @@ def create_neetcode_75_path():
         ("word-break", 107, "1-D DP", 35, 4),
         ("longest-increasing-subsequence", 108, "1-D DP", 35, 5),
         ("partition-equal-subset-sum", 109, "1-D DP", 35, 4),
-        
         # 2-D Dynamic Programming
         ("unique-paths", 110, "2-D DP", 20, 4),
         ("longest-common-subsequence", 111, "2-D DP", 30, 5),
@@ -287,7 +308,6 @@ def create_neetcode_75_path():
         ("edit-distance", 118, "2-D DP", 35, 5),
         ("burst-balloons", 119, "2-D DP", 45, 4),
         ("regular-expression-matching", 120, "2-D DP", 45, 5),
-        
         # Greedy
         ("maximum-subarray", 121, "Greedy", 20, 5),
         ("jump-game", 122, "Greedy", 25, 4),
@@ -297,14 +317,12 @@ def create_neetcode_75_path():
         ("merge-triplets-to-form-target-triplet", 126, "Greedy", 35, 3),
         ("partition-labels", 127, "Greedy", 25, 4),
         ("valid-parenthesis-string", 128, "Greedy", 30, 4),
-        
         # Intervals
         ("insert-interval", 129, "Intervals", 25, 4),
         ("merge-intervals", 130, "Intervals", 25, 5),
         ("non-overlapping-intervals", 131, "Intervals", 30, 4),
         ("meeting-rooms", 132, "Intervals", 15, 3),
         ("meeting-rooms-ii", 133, "Intervals", 30, 5),
-        
         # Math & Geometry
         ("rotate-image", 134, "Math & Geometry", 25, 4),
         ("spiral-matrix", 135, "Math & Geometry", 25, 4),
@@ -314,7 +332,6 @@ def create_neetcode_75_path():
         ("pow-x-n", 139, "Math & Geometry", 25, 4),
         ("multiply-strings", 140, "Math & Geometry", 35, 3),
         ("detect-squares", 141, "Math & Geometry", 35, 3),
-        
         # Bit Manipulation
         ("single-number", 142, "Bit Manipulation", 15, 4),
         ("number-of-1-bits", 143, "Bit Manipulation", 15, 3),
@@ -322,9 +339,9 @@ def create_neetcode_75_path():
         ("reverse-bits", 145, "Bit Manipulation", 20, 3),
         ("missing-number", 146, "Bit Manipulation", 15, 4),
         ("sum-of-two-integers", 147, "Bit Manipulation", 25, 4),
-        ("reverse-integer", 148, "Bit Manipulation", 20, 3)
+        ("reverse-integer", 148, "Bit Manipulation", 20, 3),
     ]
-    
+
     try:
         # Create the learning path
         path = create_learning_path(
@@ -332,16 +349,28 @@ def create_neetcode_75_path():
             description="A curated list of 75 LeetCode problems that cover all the important patterns and concepts needed for coding interviews. This path is designed to build a strong foundation in data structures and algorithms.",
             difficulty_level="Intermediate",
             estimated_hours=150,
-            tags=["Interview Prep", "Data Structures", "Algorithms", "NeetCode", "Coding Interview"],
+            tags=[
+                "Interview Prep",
+                "Data Structures",
+                "Algorithms",
+                "NeetCode",
+                "Coding Interview",
+            ],
             source="System",
-            is_public=True
+            is_public=True,
         )
-        
+
         logger.info(f"Created NeetCode 75 path with ID: {path.path_id}")
-        
+
         # Add all problems to the path
         success_count = 0
-        for problem_slug, sequence, category, minutes, importance in neetcode_75_problems:
+        for (
+            problem_slug,
+            sequence,
+            category,
+            minutes,
+            importance,
+        ) in neetcode_75_problems:
             try:
                 result = add_question_to_path(
                     path_id=path.path_id,
@@ -349,26 +378,31 @@ def create_neetcode_75_path():
                     sequence_number=sequence,
                     notes=f"Category: {category}",
                     estimated_minutes=minutes,
-                    importance=importance
+                    importance=importance,
                 )
                 if result:
                     success_count += 1
-                    logger.info(f"Added {problem_slug} ({success_count}/{len(neetcode_75_problems)})")
+                    logger.info(
+                        f"Added {problem_slug} ({success_count}/{len(neetcode_75_problems)})"
+                    )
             except Exception as e:
                 logger.error(f"Failed to add {problem_slug}: {str(e)}")
                 continue
-        
-        logger.info(f"Successfully added {success_count}/{len(neetcode_75_problems)} problems to NeetCode 75 path")
+
+        logger.info(
+            f"Successfully added {success_count}/{len(neetcode_75_problems)} problems to NeetCode 75 path"
+        )
         return path
-        
+
     except Exception as e:
         logger.error(f"Error creating NeetCode 75 path: {str(e)}")
-        raise 
+        raise
+
 
 def create_company_paths(creator_id):
     """Create company-specific learning paths with their key interview questions"""
     created_paths = []
-    
+
     # Amazon Path
     amazon_path = create_learning_path(
         name="Amazon Interview Prep - 30 Days",
@@ -378,13 +412,25 @@ def create_company_paths(creator_id):
         tags="Amazon,Interview,System Design,Arrays,Trees,Graphs",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     amazon_questions = [
-        ("two-sum", 1, "Classic array problem, demonstrates understanding of hash maps", 20, 5),
+        (
+            "two-sum",
+            1,
+            "Classic array problem, demonstrates understanding of hash maps",
+            20,
+            5,
+        ),
         ("add-two-numbers", 2, "Linked list manipulation, edge case handling", 25, 4),
-        ("longest-substring-without-repeating-characters", 3, "Sliding window technique", 30, 5),
+        (
+            "longest-substring-without-repeating-characters",
+            3,
+            "Sliding window technique",
+            30,
+            5,
+        ),
         ("median-of-two-sorted-arrays", 4, "Binary search on arrays", 45, 4),
         ("merge-k-sorted-lists", 5, "Heap/priority queue usage", 40, 5),
         ("trapping-rain-water", 6, "Two pointers, space optimization", 35, 4),
@@ -396,17 +442,25 @@ def create_company_paths(creator_id):
         ("lru-cache", 12, "Design pattern, hash map + doubly linked list", 40, 5),
         ("number-of-islands", 13, "DFS/BFS on 2D grid", 25, 5),
         ("meeting-rooms-ii", 14, "Interval scheduling, heap usage", 30, 5),
-        ("design-add-and-search-words-data-structure", 15, "Trie data structure", 35, 4)
+        (
+            "design-add-and-search-words-data-structure",
+            15,
+            "Trie data structure",
+            35,
+            4,
+        ),
     ]
-    
+
     for slug, seq, notes, minutes, importance in amazon_questions:
         try:
-            add_question_to_path(amazon_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                amazon_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Amazon path: {e}")
-    
+
     created_paths.append(amazon_path)
-    
+
     # Meta (Facebook) Path
     meta_path = create_learning_path(
         name="Meta Interview Prep - 30 Days",
@@ -416,35 +470,61 @@ def create_company_paths(creator_id):
         tags="Meta,Facebook,Interview,Graphs,DP,Trees,Optimization",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     meta_questions = [
         ("valid-parentheses", 1, "String processing fundamentals", 15, 5),
         ("merge-intervals", 2, "Interval processing, sorting", 25, 5),
-        ("binary-tree-vertical-order-traversal", 3, "Tree traversal with ordering", 35, 4),
+        (
+            "binary-tree-vertical-order-traversal",
+            3,
+            "Tree traversal with ordering",
+            35,
+            4,
+        ),
         ("subarray-sum-equals-k", 4, "Prefix sum technique", 25, 4),
         ("valid-palindrome", 5, "Two pointers on strings", 15, 4),
         ("remove-invalid-parentheses", 6, "BFS for minimum changes", 40, 4),
         ("expression-add-operators", 7, "Backtracking with evaluation", 45, 3),
         ("sparse-matrix-multiplication", 8, "Matrix operations optimization", 30, 4),
-        ("find-all-anagrams-in-a-string", 9, "Sliding window with frequency count", 25, 4),
+        (
+            "find-all-anagrams-in-a-string",
+            9,
+            "Sliding window with frequency count",
+            25,
+            4,
+        ),
         ("random-pick-with-weight", 10, "Probability and binary search", 30, 4),
-        ("minimum-remove-to-make-valid-parentheses", 11, "Greedy string processing", 20, 4),
+        (
+            "minimum-remove-to-make-valid-parentheses",
+            11,
+            "Greedy string processing",
+            20,
+            4,
+        ),
         ("accounts-merge", 12, "Union-Find for social connections", 35, 5),
         ("shortest-path-in-binary-matrix", 13, "BFS shortest path", 25, 4),
         ("design-hit-counter", 14, "Rate limiting design", 30, 5),
-        ("product-of-array-except-self", 15, "Array manipulation without division", 20, 5)
+        (
+            "product-of-array-except-self",
+            15,
+            "Array manipulation without division",
+            20,
+            5,
+        ),
     ]
-    
+
     for slug, seq, notes, minutes, importance in meta_questions:
         try:
-            add_question_to_path(meta_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                meta_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Meta path: {e}")
-    
+
     created_paths.append(meta_path)
-    
+
     # Uber Path
     uber_path = create_learning_path(
         name="Uber Interview Prep - 30 Days",
@@ -454,9 +534,9 @@ def create_company_paths(creator_id):
         tags="Uber,Interview,Geolocation,Graphs,Real-time,Optimization",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     uber_questions = [
         ("palindromic-substrings", 1, "String DP fundamentals", 25, 4),
         ("word-pattern", 2, "Hash map pattern matching", 20, 4),
@@ -472,24 +552,27 @@ def create_company_paths(creator_id):
         ("reconstruct-itinerary", 12, "Eulerian path in graphs", 35, 3),
         ("find-median-from-data-stream", 13, "Two heaps for dynamic median", 30, 5),
         ("k-closest-points-to-origin", 14, "Heap for geographic proximity", 25, 5),
-        ("minimum-cost-to-hire-k-workers", 15, "Optimization with constraints", 40, 4)
+        ("minimum-cost-to-hire-k-workers", 15, "Optimization with constraints", 40, 4),
     ]
-    
+
     for slug, seq, notes, minutes, importance in uber_questions:
         try:
-            add_question_to_path(uber_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                uber_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Uber path: {e}")
-    
+
     created_paths.append(uber_path)
-    
+
     logger.info(f"Created {len(created_paths)} company learning paths")
     return created_paths
+
 
 def create_topic_paths(creator_id):
     """Create topic-specific learning paths"""
     created_paths = []
-    
+
     # Binary Search Path
     binary_search_path = create_learning_path(
         name="Binary Search Mastery",
@@ -499,30 +582,50 @@ def create_topic_paths(creator_id):
         tags="Binary Search,Algorithms,Search,Optimization",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     binary_search_questions = [
         ("binary-search", 1, "Basic binary search implementation", 15, 5),
         ("search-insert-position", 2, "Binary search with insertion point", 15, 4),
-        ("find-first-and-last-position-of-element-in-sorted-array", 3, "Finding bounds with binary search", 25, 5),
+        (
+            "find-first-and-last-position-of-element-in-sorted-array",
+            3,
+            "Finding bounds with binary search",
+            25,
+            5,
+        ),
         ("search-in-rotated-sorted-array", 4, "Modified binary search", 30, 5),
-        ("find-minimum-in-rotated-sorted-array", 5, "Finding pivot in rotated array", 25, 4),
+        (
+            "find-minimum-in-rotated-sorted-array",
+            5,
+            "Finding pivot in rotated array",
+            25,
+            4,
+        ),
         ("search-a-2d-matrix", 6, "2D binary search", 20, 4),
         ("koko-eating-bananas", 7, "Binary search on answer", 30, 4),
-        ("capacity-to-ship-packages-within-d-days", 8, "Optimization with binary search", 35, 4),
+        (
+            "capacity-to-ship-packages-within-d-days",
+            8,
+            "Optimization with binary search",
+            35,
+            4,
+        ),
         ("median-of-two-sorted-arrays", 9, "Advanced binary search", 45, 5),
-        ("find-k-closest-elements", 10, "Binary search with sliding window", 30, 4)
+        ("find-k-closest-elements", 10, "Binary search with sliding window", 30, 4),
     ]
-    
+
     for slug, seq, notes, minutes, importance in binary_search_questions:
         try:
-            add_question_to_path(binary_search_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                binary_search_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Binary Search path: {e}")
-    
+
     created_paths.append(binary_search_path)
-    
+
     # Dynamic Programming Path
     dp_path = create_learning_path(
         name="Dynamic Programming Deep Dive",
@@ -532,9 +635,9 @@ def create_topic_paths(creator_id):
         tags="Dynamic Programming,DP,Optimization,Algorithms",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     dp_questions = [
         ("climbing-stairs", 1, "Basic DP - Fibonacci pattern", 15, 5),
         ("house-robber", 2, "1D DP with constraints", 20, 5),
@@ -550,17 +653,17 @@ def create_topic_paths(creator_id):
         ("partition-equal-subset-sum", 12, "0/1 Knapsack", 30, 4),
         ("longest-common-subsequence", 13, "Classic 2D DP", 25, 5),
         ("regular-expression-matching", 14, "Advanced string DP", 45, 4),
-        ("burst-balloons", 15, "Interval DP", 45, 3)
+        ("burst-balloons", 15, "Interval DP", 45, 3),
     ]
-    
+
     for slug, seq, notes, minutes, importance in dp_questions:
         try:
             add_question_to_path(dp_path.path_id, slug, seq, notes, minutes, importance)
         except Exception as e:
             logger.error(f"Failed to add {slug} to DP path: {e}")
-    
+
     created_paths.append(dp_path)
-    
+
     # Graph Algorithms Path
     graph_path = create_learning_path(
         name="Graph Algorithms Complete Guide",
@@ -570,9 +673,9 @@ def create_topic_paths(creator_id):
         tags="Graphs,DFS,BFS,Shortest Path,Algorithms",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     graph_questions = [
         ("number-of-islands", 1, "Basic DFS on 2D grid", 25, 5),
         ("clone-graph", 2, "Graph cloning with DFS/BFS", 25, 4),
@@ -581,31 +684,40 @@ def create_topic_paths(creator_id):
         ("pacific-atlantic-water-flow", 5, "Multi-source DFS", 35, 4),
         ("word-ladder", 6, "BFS shortest path", 35, 4),
         ("network-delay-time", 7, "Dijkstra's algorithm", 35, 4),
-        ("cheapest-flights-within-k-stops", 8, "Modified Dijkstra with constraints", 40, 4),
+        (
+            "cheapest-flights-within-k-stops",
+            8,
+            "Modified Dijkstra with constraints",
+            40,
+            4,
+        ),
         ("alien-dictionary", 9, "Topological sort with custom ordering", 35, 4),
         ("minimum-spanning-tree", 10, "MST algorithms", 40, 3),
         ("critical-connections-in-a-network", 11, "Tarjan's bridge-finding", 45, 3),
         ("accounts-merge", 12, "Union-Find for connected components", 35, 4),
         ("graph-valid-tree", 13, "Tree validation in graphs", 25, 4),
         ("shortest-path-in-binary-matrix", 14, "BFS with obstacles", 25, 4),
-        ("reconstruct-itinerary", 15, "Eulerian path", 35, 3)
+        ("reconstruct-itinerary", 15, "Eulerian path", 35, 3),
     ]
-    
+
     for slug, seq, notes, minutes, importance in graph_questions:
         try:
-            add_question_to_path(graph_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                graph_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Graph path: {e}")
-    
+
     created_paths.append(graph_path)
-    
+
     logger.info(f"Created {len(created_paths)} topic learning paths")
     return created_paths
+
 
 def create_pattern_paths(creator_id):
     """Create pattern-based learning paths"""
     created_paths = []
-    
+
     # LeetCode 101 Path
     leetcode_101_path = create_learning_path(
         name="LeetCode 101 - Algorithm Patterns",
@@ -615,24 +727,33 @@ def create_pattern_paths(creator_id):
         tags="LeetCode 101,Patterns,Fundamentals,Comprehensive",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     leetcode_101_questions = [
         # Greedy Algorithm
         ("assign-cookies", 1, "Greedy - Basic assignment problem", 15, 4),
         ("non-overlapping-intervals", 2, "Greedy - Interval scheduling", 25, 4),
-        ("minimum-number-of-arrows-to-burst-balloons", 3, "Greedy - Interval merging", 25, 4),
-        
+        (
+            "minimum-number-of-arrows-to-burst-balloons",
+            3,
+            "Greedy - Interval merging",
+            25,
+            4,
+        ),
         # Binary Search
         ("binary-search", 4, "Binary Search - Template implementation", 15, 5),
-        ("find-first-and-last-position-of-element-in-sorted-array", 5, "Binary Search - Finding bounds", 25, 4),
+        (
+            "find-first-and-last-position-of-element-in-sorted-array",
+            5,
+            "Binary Search - Finding bounds",
+            25,
+            4,
+        ),
         ("search-in-rotated-sorted-array", 6, "Binary Search - Rotated array", 30, 4),
-        
         # Sort
         ("merge-intervals", 7, "Sorting - Interval merging", 25, 4),
         ("largest-number", 8, "Sorting - Custom comparator", 30, 3),
-        
         # Dynamic Programming
         ("climbing-stairs", 9, "DP - Basic recursion to DP", 15, 5),
         ("triangle", 10, "DP - Path sum optimization", 20, 4),
@@ -645,25 +766,31 @@ def create_pattern_paths(creator_id):
         ("best-time-to-buy-and-sell-stock", 17, "DP - State machine", 20, 5),
         ("longest-increasing-subsequence", 18, "DP - LIS pattern", 30, 4),
         ("partition-equal-subset-sum", 19, "DP - 0/1 knapsack", 30, 4),
-        
         # Divide and Conquer
         ("maximum-subarray", 20, "D&C - Alternative to DP approach", 25, 3),
         ("majority-element", 21, "D&C - Boyer-Moore algorithm", 20, 4),
-        
         # Search (DFS/BFS)
         ("max-area-of-island", 22, "DFS - 2D grid traversal", 25, 4),
-        ("find-all-anagrams-in-a-string", 23, "Sliding window - Pattern matching", 25, 4),
-        ("pacific-atlantic-water-flow", 24, "DFS - Multi-source exploration", 35, 4)
+        (
+            "find-all-anagrams-in-a-string",
+            23,
+            "Sliding window - Pattern matching",
+            25,
+            4,
+        ),
+        ("pacific-atlantic-water-flow", 24, "DFS - Multi-source exploration", 35, 4),
     ]
-    
+
     for slug, seq, notes, minutes, importance in leetcode_101_questions:
         try:
-            add_question_to_path(leetcode_101_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                leetcode_101_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to LeetCode 101 path: {e}")
-    
+
     created_paths.append(leetcode_101_path)
-    
+
     # Grokking Coding Interview Path
     grokking_path = create_learning_path(
         name="Grokking the Coding Interview Patterns",
@@ -673,49 +800,65 @@ def create_pattern_paths(creator_id):
         tags="Grokking,Patterns,Interview,Systematic",
         source="System",
         creator_id=creator_id,
-        is_public=True
+        is_public=True,
     )
-    
+
     grokking_questions = [
         # Pattern 1: Sliding Window
         ("maximum-sum-subarray-of-size-k", 1, "Sliding Window - Fixed size", 20, 4),
-        ("smallest-subarray-with-given-sum", 2, "Sliding Window - Variable size", 25, 4),
-        ("longest-substring-with-k-distinct-characters", 3, "Sliding Window - K distinct", 30, 4),
+        (
+            "smallest-subarray-with-given-sum",
+            2,
+            "Sliding Window - Variable size",
+            25,
+            4,
+        ),
+        (
+            "longest-substring-with-k-distinct-characters",
+            3,
+            "Sliding Window - K distinct",
+            30,
+            4,
+        ),
         ("fruits-into-baskets", 4, "Sliding Window - At most 2 types", 25, 4),
-        ("longest-substring-without-repeating-characters", 5, "Sliding Window - No repeats", 25, 5),
-        
+        (
+            "longest-substring-without-repeating-characters",
+            5,
+            "Sliding Window - No repeats",
+            25,
+            5,
+        ),
         # Pattern 2: Two Pointers
         ("pair-with-target-sum", 6, "Two Pointers - Target sum", 15, 5),
         ("remove-duplicates", 7, "Two Pointers - In-place removal", 15, 4),
         ("squaring-a-sorted-array", 8, "Two Pointers - Merge technique", 20, 4),
         ("triplet-sum-to-zero", 9, "Two Pointers - 3Sum", 30, 5),
         ("triplet-sum-close-to-target", 10, "Two Pointers - Closest sum", 25, 4),
-        
         # Pattern 3: Fast & Slow Pointers
         ("linkedlist-cycle", 11, "Fast Slow - Cycle detection", 20, 5),
         ("start-of-linkedlist-cycle", 12, "Fast Slow - Cycle start", 25, 4),
         ("happy-number", 13, "Fast Slow - Number cycle", 20, 4),
         ("middle-of-the-linkedlist", 14, "Fast Slow - Middle finding", 15, 4),
-        
         # Pattern 4: Merge Intervals
         ("merge-intervals", 15, "Merge Intervals - Basic merging", 25, 5),
         ("insert-interval", 16, "Merge Intervals - Insert and merge", 25, 4),
         ("intervals-intersection", 17, "Merge Intervals - Intersection", 25, 4),
         ("conflicting-appointments", 18, "Merge Intervals - Conflict detection", 20, 4),
-        
         # Pattern 5: Cyclic Sort
         ("cyclic-sort", 19, "Cyclic Sort - Basic implementation", 20, 4),
         ("find-the-missing-number", 20, "Cyclic Sort - Missing number", 15, 4),
-        ("find-all-missing-numbers", 21, "Cyclic Sort - All missing", 20, 4)
+        ("find-all-missing-numbers", 21, "Cyclic Sort - All missing", 20, 4),
     ]
-    
+
     for slug, seq, notes, minutes, importance in grokking_questions:
         try:
-            add_question_to_path(grokking_path.path_id, slug, seq, notes, minutes, importance)
+            add_question_to_path(
+                grokking_path.path_id, slug, seq, notes, minutes, importance
+            )
         except Exception as e:
             logger.error(f"Failed to add {slug} to Grokking path: {e}")
-    
+
     created_paths.append(grokking_path)
-    
+
     logger.info(f"Created {len(created_paths)} pattern learning paths")
-    return created_paths 
+    return created_paths

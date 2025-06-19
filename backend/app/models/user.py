@@ -1,10 +1,12 @@
 from datetime import datetime
 from app import db
 
+
 class User(db.Model):
     """User model"""
-    __tablename__ = 'users'
-    
+
+    __tablename__ = "users"
+
     user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -14,12 +16,18 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     # New: admin flag
     is_admin = db.Column(db.Boolean, default=False)
-    
+
     # Relationships
-    user_questions = db.relationship('UserQuestion', back_populates='user', cascade='all, delete-orphan')
-    review_schedules = db.relationship('ReviewSchedule', back_populates='user', cascade='all, delete-orphan')
-    created_paths = db.relationship('LearningPath', back_populates='creator')
-    learning_paths = db.relationship('UserLearningPath', back_populates='user', cascade='all, delete-orphan')
-    
+    user_questions = db.relationship(
+        "UserQuestion", back_populates="user", cascade="all, delete-orphan"
+    )
+    review_schedules = db.relationship(
+        "ReviewSchedule", back_populates="user", cascade="all, delete-orphan"
+    )
+    created_paths = db.relationship("LearningPath", back_populates="creator")
+    learning_paths = db.relationship(
+        "UserLearningPath", back_populates="user", cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
-        return f"<User {self.email}>" 
+        return f"<User {self.email}>"
