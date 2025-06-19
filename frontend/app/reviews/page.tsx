@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { getApiUrl } from "../config/api";
@@ -34,21 +34,7 @@ const ReviewsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Don't redirect if auth is still loading
-    if (authLoading) {
-      return;
-    }
-
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    fetchReviews();
-  }, [user, authLoading, router]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -85,7 +71,20 @@ const ReviewsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    fetchReviews();
+  }, [user, authLoading, router, fetchReviews]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {

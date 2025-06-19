@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { getApiUrl } from "../../../config/api";
@@ -57,6 +57,24 @@ export default function PathEditor() {
     border: "#45475a",
   };
 
+  const fetchPath = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(getApiUrl(`/learning-paths/${pathId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch path");
+      const data = await res.json();
+      setPath(data.data || {});
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }, [pathId]);
+
   useEffect(() => {
     if (user && !user.is_admin) {
       router.replace("/");
@@ -65,25 +83,7 @@ export default function PathEditor() {
     if (pathId) {
       fetchPath();
     }
-  }, [user, pathId, router]);
-
-  const fetchPath = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl(`/api/v1/learning-paths/${pathId}`), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch path");
-
-      const data = await res.json();
-      setPath(data.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, pathId, router, fetchPath]);
 
   const updatePath = async (updates: Partial<LearningPath>) => {
     if (!path) return;
@@ -91,17 +91,14 @@ export default function PathEditor() {
     setSaving(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updates),
-        }
-      );
+      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
 
       if (res.ok) {
         setPath({ ...path, ...updates });
@@ -127,7 +124,7 @@ export default function PathEditor() {
         Math.max(0, ...path.questions.map((q) => q.sequence_number)) + 1;
 
       const res = await fetch(
-        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions`),
+        getApiUrl(`/admin/learning-paths/${pathId}/questions`),
         {
           method: "POST",
           headers: {
@@ -170,7 +167,7 @@ export default function PathEditor() {
 
       const res = await fetch(
         getApiUrl(
-          `/api/v1/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`
+          `/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`
         ), // Using sequence_number as path_question_id for now
         {
           method: "DELETE",
@@ -199,7 +196,7 @@ export default function PathEditor() {
       }));
 
       const res = await fetch(
-        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions/reorder`),
+        getApiUrl(`/admin/learning-paths/${pathId}/questions/reorder`),
         {
           method: "PUT",
           headers: {

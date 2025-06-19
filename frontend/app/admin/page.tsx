@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const fetchPaths = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths"), {
+      const res = await fetch(getApiUrl("/admin/learning-paths"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -78,17 +78,14 @@ export default function AdminDashboard() {
     setBulkCreating(pathType);
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        getApiUrl("/api/v1/admin/learning-paths/bulk-create"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ path_type: pathType }),
-        }
-      );
+      const res = await fetch(getApiUrl("/admin/learning-paths/bulk-create"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ path_type: pathType }),
+      });
 
       const data = await res.json();
       if (res.ok) {
@@ -107,17 +104,14 @@ export default function AdminDashboard() {
   const handleToggleStatus = async (pathId: number, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ is_active: !currentStatus }),
-        }
-      );
+      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_active: !currentStatus }),
+      });
 
       if (res.ok) {
         await fetchPaths();
@@ -135,13 +129,10 @@ export default function AdminDashboard() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        getApiUrl(`/api/v1/admin/learning-paths/${pathId}`),
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (res.ok) {
         await fetchPaths();

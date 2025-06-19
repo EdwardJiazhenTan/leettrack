@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
@@ -67,7 +67,7 @@ const TodayPage: React.FC = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [ratingsLoading, setRatingsLoading] = useState(false);
 
-  const fetchTodaysData = async () => {
+  const fetchTodaysData = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -114,13 +114,13 @@ const TodayPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user && !authLoading) {
       fetchTodaysData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchTodaysData]);
 
   const handleCompleteReview = async (
     userQuestionId: number,

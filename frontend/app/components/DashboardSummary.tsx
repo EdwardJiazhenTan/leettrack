@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { buildApiUrl, API_ENDPOINTS } from "../config/api";
@@ -25,7 +25,7 @@ const DashboardSummary: React.FC<DashboardSummaryProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user || authLoading) return;
 
     setLoading(true);
@@ -61,11 +61,11 @@ const DashboardSummary: React.FC<DashboardSummaryProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, authLoading, onDataLoaded]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [user, authLoading]);
+  }, [fetchDashboardData]);
 
   if (loading) {
     return (

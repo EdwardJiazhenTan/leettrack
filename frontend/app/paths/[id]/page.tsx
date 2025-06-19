@@ -53,9 +53,7 @@ export default function PathDetailPage() {
   useEffect(() => {
     const fetchPath = async () => {
       try {
-        const response = await fetch(
-          getApiUrl(`/api/v1/learning-paths/${pathId}`)
-        );
+        const response = await fetch(getApiUrl(`/learning-paths/${pathId}`));
         if (response.ok) {
           const data = await response.json();
           setPath(data.data);

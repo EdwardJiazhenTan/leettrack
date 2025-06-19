@@ -1,11 +1,19 @@
-// API Configuration - Use Next.js environment variable
-export const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:5000";
+// API Configuration - Use Next.js environment variable consistently
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL environment variable is required");
+}
 
 // Helper function to build API URLs
 export const buildApiUrl = (endpoint: string): string => {
-  // Remove leading slash if present
+  // Remove leading slash if present to avoid double slashes
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
-  return `${API_BASE_URL}/${cleanEndpoint}`;
+  // Remove trailing slash from base URL to avoid double slashes
+  const cleanBaseUrl = API_BASE_URL.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
+  return `${cleanBaseUrl}/${cleanEndpoint}`;
 };
 
 // For backward compatibility - export a simple function that other files can use
