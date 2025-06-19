@@ -99,6 +99,25 @@ def create_app(config_name="development"):
             "error": "authorization_required",
         }, 401
 
+    # Error handlers
+    @app.errorhandler(400)
+    def bad_request(error):
+        return {"status": "error", "message": "Bad request"}, 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return {"status": "error", "message": "Resource not found"}, 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return {"status": "error", "message": "Method not allowed"}, 405
+
+    from werkzeug.exceptions import BadRequest
+    
+    @app.errorhandler(BadRequest)
+    def handle_bad_request(error):
+        return {"status": "error", "message": "Invalid JSON format"}, 400
+
     # Test route
     @app.route("/ping")
     def ping():

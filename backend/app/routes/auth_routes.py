@@ -50,7 +50,7 @@ def register():
 
         # Check if email already exists
         if User.query.filter_by(email=data["email"]).first():
-            return jsonify({"message": "Email already registered"}), 409
+            return jsonify({"status": "error", "message": "Email already registered"}), 409
 
         # Create new user
         password_hash = bcrypt.hash(data["password"])
@@ -71,7 +71,8 @@ def register():
         return (
             jsonify(
                 {
-                    "message": "Registration successful",
+                    "status": "success",
+                    "message": "User registered successfully",
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                     "user": {
@@ -95,16 +96,21 @@ def register():
 def login():
     """Authenticate a user and return JWT tokens"""
     try:
-        data = request.get_json()
+        try:
+            data = request.get_json()
+            if data is None:
+                return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+        except Exception:
+            return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
 
         # Validate required fields
         if not all(k in data for k in ["email", "password"]):
-            return jsonify({"message": "Missing required fields"}), 400
+            return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
         # Find user
         user = User.query.filter_by(email=data["email"]).first()
         if not user or not bcrypt.verify(data["password"], user.password_hash):
-            return jsonify({"message": "Invalid email or password"}), 401
+            return jsonify({"status": "error", "message": "Invalid email or password"}), 401
 
         # Update last login time
         user.last_login = datetime.utcnow()
@@ -117,6 +123,7 @@ def login():
         return (
             jsonify(
                 {
+                    "status": "success",
                     "message": "Login successful",
                     "access_token": access_token,
                     "refresh_token": refresh_token,
@@ -133,7 +140,7 @@ def login():
 
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
-        return jsonify({"message": "An error occurred during login"}), 500
+        return jsonify({"status": "error", "message": "An error occurred during login"}), 500
 
 
 @auth.route("/refresh", methods=["POST"])
@@ -165,12 +172,15 @@ def me():
         return (
             jsonify(
                 {
-                    "id": user.user_id,
-                    "email": user.email,
-                    "leetcode_username": user.leetcode_username,
-                    "is_admin": user.is_admin,
-                    "created_at": user.created_at,
-                    "last_login": user.last_login,
+                    "status": "success",
+                    "user": {
+                        "id": user.user_id,
+                        "email": user.email,
+                        "leetcode_username": user.leetcode_username,
+                        "is_admin": user.is_admin,
+                        "created_at": user.created_at,
+                        "last_login": user.last_login,
+                    },
                 }
             ),
             200,

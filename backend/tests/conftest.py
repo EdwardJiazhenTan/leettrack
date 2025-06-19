@@ -77,7 +77,9 @@ def admin_user(app):
 def auth_headers(app, test_user):
     """Create authorization headers for authenticated requests."""
     with app.app_context():
-        access_token = create_access_token(identity=test_user.id)
+        # Re-query the user to get a fresh session-bound instance
+        user = User.query.filter_by(email="test@example.com").first()
+        access_token = create_access_token(identity=str(user.user_id))
         return {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
@@ -88,7 +90,9 @@ def auth_headers(app, test_user):
 def admin_headers(app, admin_user):
     """Create authorization headers for admin requests."""
     with app.app_context():
-        access_token = create_access_token(identity=admin_user.id)
+        # Re-query the user to get a fresh session-bound instance
+        user = User.query.filter_by(email="admin@example.com").first()
+        access_token = create_access_token(identity=str(user.user_id))
         return {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",

@@ -54,7 +54,7 @@ def get_all_learning_paths():
                 }
             )
 
-        return jsonify({"status": "success", "data": paths_data}), 200
+        return jsonify({"status": "success", "data": {"learning_paths": paths_data}}), 200
 
     except Exception as e:
         logger.error(f"Error getting learning paths: {str(e)}")

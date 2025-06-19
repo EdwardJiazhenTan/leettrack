@@ -63,7 +63,7 @@ class TestAuthEndpoints:
             content_type="application/json",
         )
 
-        assert response.status_code == 400
+        assert response.status_code == 409  # Conflict is the correct status for duplicate resource
         data = json.loads(response.data)
         assert data["status"] == "error"
 
@@ -233,22 +233,22 @@ class TestLearningPathsEndpoints:
             from app import db
 
             path = LearningPath(
-                title="Test Path",
+                name="Test Path",
                 description="Test Description",
-                difficulty="Easy",
+                difficulty_level="Easy",
                 source="leetcode",
                 is_active=True,
             )
             db.session.add(path)
             db.session.commit()
-            path_id = path.id
+            path_id = path.path_id
 
         response = client.get(f"/api/v1/learning-paths/{path_id}")
 
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "success"
-        assert data["data"]["title"] == "Test Path"
+        assert data["data"]["name"] == "Test Path"
 
     def test_get_nonexistent_learning_path(self, client):
         """Test getting a non-existent learning path"""

@@ -1,5 +1,6 @@
 from datetime import datetime
 from app import db
+from passlib.hash import bcrypt
 
 
 class User(db.Model):
@@ -28,6 +29,19 @@ class User(db.Model):
     learning_paths = db.relationship(
         "UserLearningPath", back_populates="user", cascade="all, delete-orphan"
     )
+
+    def set_password(self, password):
+        """Hash and set the user's password."""
+        self.password_hash = bcrypt.hash(password)
+
+    def check_password(self, password):
+        """Check if the provided password matches the stored hash."""
+        return bcrypt.verify(password, self.password_hash)
+
+    @property
+    def id(self):
+        """Return user_id as id for compatibility with JWT and other systems."""
+        return self.user_id
 
     def __repr__(self):
         return f"<User {self.email}>"
