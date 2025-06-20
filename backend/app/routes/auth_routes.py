@@ -50,7 +50,10 @@ def register():
 
         # Check if email already exists
         if User.query.filter_by(email=data["email"]).first():
-            return jsonify({"status": "error", "message": "Email already registered"}), 409
+            return (
+                jsonify({"status": "error", "message": "Email already registered"}),
+                409,
+            )
 
         # Create new user
         password_hash = bcrypt.hash(data["password"])
@@ -99,18 +102,27 @@ def login():
         try:
             data = request.get_json()
             if data is None:
-                return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
+                return (
+                    jsonify({"status": "error", "message": "Invalid JSON format"}),
+                    400,
+                )
         except Exception:
             return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
 
         # Validate required fields
         if not all(k in data for k in ["email", "password"]):
-            return jsonify({"status": "error", "message": "Missing required fields"}), 400
+            return (
+                jsonify({"status": "error", "message": "Missing required fields"}),
+                400,
+            )
 
         # Find user
         user = User.query.filter_by(email=data["email"]).first()
         if not user or not bcrypt.verify(data["password"], user.password_hash):
-            return jsonify({"status": "error", "message": "Invalid email or password"}), 401
+            return (
+                jsonify({"status": "error", "message": "Invalid email or password"}),
+                401,
+            )
 
         # Update last login time
         user.last_login = datetime.utcnow()
@@ -140,7 +152,10 @@ def login():
 
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
-        return jsonify({"status": "error", "message": "An error occurred during login"}), 500
+        return (
+            jsonify({"status": "error", "message": "An error occurred during login"}),
+            500,
+        )
 
 
 @auth.route("/refresh", methods=["POST"])

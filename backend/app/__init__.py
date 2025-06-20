@@ -113,7 +113,7 @@ def create_app(config_name="development"):
         return {"status": "error", "message": "Method not allowed"}, 405
 
     from werkzeug.exceptions import BadRequest
-    
+
     @app.errorhandler(BadRequest)
     def handle_bad_request(error):
         return {"status": "error", "message": "Invalid JSON format"}, 400

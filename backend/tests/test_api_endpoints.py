@@ -63,7 +63,9 @@ class TestAuthEndpoints:
             content_type="application/json",
         )
 
-        assert response.status_code == 409  # Conflict is the correct status for duplicate resource
+        assert (
+            response.status_code == 409
+        )  # Conflict is the correct status for duplicate resource
         data = json.loads(response.data)
         assert data["status"] == "error"
 
