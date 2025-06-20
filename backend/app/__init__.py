@@ -125,9 +125,4 @@ def create_app(config_name="development"):
     def ping():
         return {"message": "pong"}, 200
 
-    # Create a simple index route
-    @app.route("/")
-    def index():
-        return {"name": "LeetTrack API", "version": "1.0", "status": "active"}
-
     return app

@@ -8,7 +8,7 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def index():
-    return jsonify({"message": "Welcome to LeetTrack API", "version": "1.0.0"})
+    return jsonify({"name": "LeetTrack API", "version": "1.0", "status": "active"})
 
 
 @main.route("/api/health")
