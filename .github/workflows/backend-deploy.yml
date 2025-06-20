@@ -135,27 +135,72 @@ jobs:
             echo "📂 Directory contents:"
             ls -la
             
+            # Check Git repository status
+            echo "🔍 Git repository diagnosis:"
+            echo "Branch: $(git branch --show-current)"
+            echo "Remote URL: $(git remote get-url origin)"
+            echo "Last commit: $(git log -1 --oneline)"
+            echo "Git status:"
+            git status --porcelain
+            
             # Backup current version (only if backend exists)
             if [ -d "backend" ]; then
+                echo "📦 Creating backup..."
                 cp -r backend backend_backup_$(date +%Y%m%d_%H%M%S) || echo "Backup failed but continuing..."
             else
-                echo "No backend directory found - this might be the first deployment"
+                echo "⚠️ No backend directory found - checking repository integrity"
             fi
             
-            # Pull latest changes
+            # Pull latest changes with verbose output
             echo "📥 Pulling latest changes..."
-            git pull origin main
+            git fetch origin main
+            echo "📥 Git fetch completed. Checking differences..."
+            git diff HEAD origin/main --name-only
             
-            # Check if backend directory exists after git pull
+            # Reset to ensure clean state
+            echo "🔄 Resetting to clean repository state..."
+            git reset --hard origin/main
+            
+            # Check if backend directory exists after reset
             if [ ! -d "backend" ]; then
-                echo "❌ Error: backend directory still not found after git pull"
-                echo "📂 Current directory contents after git pull:"
+                echo "❌ Backend directory still missing after git reset!"
+                echo "🔍 Attempting repository recovery..."
+                
+                # Check disk space
+                echo "💾 Disk space:"
+                df -h
+                
+                # Check file count in git
+                echo "📊 Files tracked by git:"
+                git ls-files | grep backend | wc -l
+                echo "📊 Sample backend files in git:"
+                git ls-files | grep backend | head -5
+                
+                # Try alternative: clean checkout
+                echo "🔄 Attempting clean checkout..."
+                git clean -fd
+                git checkout HEAD -- .
+                
+                # Final check
+                if [ ! -d "backend" ]; then
+                    echo "❌ CRITICAL: Cannot recover backend directory"
+                    echo "📋 Repository state:"
+                    git log --oneline -5
+                    echo "📋 Working directory:"
+                    find . -maxdepth 2 -type d | sort
+                    exit 1
+                fi
+            fi
+            
+            echo "✅ Backend directory confirmed present"
+            cd backend
+            
+            # Verify critical files exist
+            if [ ! -f "app.py" ] || [ ! -f "wsgi.py" ]; then
+                echo "❌ Critical backend files missing!"
                 ls -la
                 exit 1
             fi
-            
-            # Navigate to backend directory
-            cd backend
             
             # Create virtual environment if it doesn't exist
             if [ ! -d "venv" ]; then
