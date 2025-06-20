@@ -130,12 +130,29 @@ jobs:
             # Navigate to project directory
             cd /home/ubuntu/LeetTrack
             
-            # Backup current version
-            cp -r backend backend_backup_$(date +%Y%m%d_%H%M%S) || echo "No previous version to backup"
+            # Debug: Check current directory structure
+            echo "📂 Current directory: $(pwd)"
+            echo "📂 Directory contents:"
+            ls -la
+            
+            # Backup current version (only if backend exists)
+            if [ -d "backend" ]; then
+                cp -r backend backend_backup_$(date +%Y%m%d_%H%M%S) || echo "Backup failed but continuing..."
+            else
+                echo "No backend directory found - this might be the first deployment"
+            fi
             
             # Pull latest changes
             echo "📥 Pulling latest changes..."
             git pull origin main
+            
+            # Check if backend directory exists after git pull
+            if [ ! -d "backend" ]; then
+                echo "❌ Error: backend directory still not found after git pull"
+                echo "📂 Current directory contents after git pull:"
+                ls -la
+                exit 1
+            fi
             
             # Navigate to backend directory
             cd backend
