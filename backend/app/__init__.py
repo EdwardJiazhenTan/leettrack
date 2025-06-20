@@ -73,7 +73,9 @@ def create_app(config_name="development"):
     from app.routes.auth_routes import auth
     from app.routes.debug_routes import debug
     from app.routes.admin_routes import admin
+    from app.routes.index import main
 
+    app.register_blueprint(main)
     app.register_blueprint(leetcode)
     app.register_blueprint(learning_paths_bp)
     app.register_blueprint(auth)

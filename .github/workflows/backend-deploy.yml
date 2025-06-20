@@ -190,13 +190,13 @@ jobs:
             echo "Attempting to check service status..."
             
             ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-              echo "Checking service status..."
-              systemctl status leettrack-backend || systemctl status gunicorn || echo "No systemd service found"
-              echo "Checking gunicorn processes..."
-              ps aux | grep gunicorn
-              echo "Checking recent logs..."
-              tail -20 /home/ubuntu/LeetTrack/backend/gunicorn.log || echo "No gunicorn.log found"
-            EOF
+            echo "Checking service status..."
+            systemctl status leettrack-backend || systemctl status gunicorn || echo "No systemd service found"
+            echo "Checking gunicorn processes..."
+            ps aux | grep gunicorn
+            echo "Checking recent logs..."
+            tail -20 /home/ubuntu/LeetTrack/backend/gunicorn.log || echo "No gunicorn.log found"
+          EOF
             
             exit 1
           fi
