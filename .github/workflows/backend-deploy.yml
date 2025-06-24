@@ -50,24 +50,29 @@ jobs:
       - name: Install dependencies
         working-directory: ./backend
         run: |
+          python -m venv venv
+          source venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest-xvfb  # For any GUI tests if needed
+          pip install pytest-xvfb gunicorn
 
       - name: Code formatting check (black)
         working-directory: ./backend
         run: |
+          source venv/bin/activate
           black --check --diff .
 
       - name: Lint code (flake8)
         working-directory: ./backend
         run: |
+          source venv/bin/activate
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Security scan (bandit)
         working-directory: ./backend
         run: |
+          source venv/bin/activate
           pip install bandit
           bandit -r . -f json -o bandit-report.json || true
           bandit -r . --severity-level medium
@@ -80,6 +85,7 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
           JWT_SECRET_KEY: test-jwt-secret-key-for-ci
         run: |
+          source venv/bin/activate
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing -v
 
       - name: Upload coverage reports
@@ -127,8 +133,8 @@ jobs:
                 sudo apt install -y python3-venv
             fi
             
-            # Navigate to project directory
-            cd /home/ubuntu/LeetTrack
+            # Navigate to project directory - FIXED PATH
+            cd LeetTrack/backend
             
             # Debug: Check current directory structure
             echo "📂 Current directory: $(pwd)"
@@ -137,6 +143,7 @@ jobs:
             
             # Check Git repository status
             echo "🔍 Git repository diagnosis:"
+            cd ..  # Go to LeetTrack root for git operations
             echo "Branch: $(git branch --show-current)"
             echo "Remote URL: $(git remote get-url origin)"
             echo "Last commit: $(git log -1 --oneline)"
@@ -212,14 +219,22 @@ jobs:
             echo "🔧 Activating virtual environment..."
             source venv/bin/activate
             
-            # Install/update dependencies
+            # Install/update dependencies including gunicorn
             echo "📦 Installing dependencies..."
             pip install --upgrade pip
             pip install -r requirements.txt
+            pip install gunicorn
+            
+            # Create logs directory for gunicorn
+            echo "📁 Creating logs directory..."
+            mkdir -p logs
+            
+            # Set environment variables for Flask commands
+            export FLASK_APP=app.py
+            export FLASK_ENV=production
             
             # Run database migrations
             echo "🗄️ Running database migrations..."
-            export FLASK_APP=app.py
             flask db upgrade || echo "No migrations to run"
             
             # Test application startup

@@ -20,9 +20,9 @@ keepalive = 2
 preload_app = True
 reload = False
 
-# Logging
-accesslog = "/var/log/gunicorn/leettrack_access.log"
-errorlog = "/var/log/gunicorn/leettrack_error.log"
+# Logging - Using relative paths that don't require special permissions
+accesslog = "logs/access.log"
+errorlog = "logs/error.log"
 loglevel = "info"
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
@@ -31,7 +31,7 @@ proc_name = "leettrack"
 
 # Server mechanics
 daemon = False
-pidfile = "/var/run/gunicorn/leettrack.pid"
+pidfile = "leettrack.pid"  # Use relative path
 user = "ubuntu"
 group = "ubuntu"
 tmp_upload_dir = None
