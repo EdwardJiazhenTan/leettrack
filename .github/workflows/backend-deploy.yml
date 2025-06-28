@@ -83,8 +83,8 @@ jobs:
         run: |
           source venv/bin/activate
           pip install bandit
-          bandit -r . -f json -o bandit-report.json || true
-          bandit -r . --severity-level medium
+          bandit -r . -f json -o bandit-report.json --exclude venv/,__pycache__/,.pytest_cache/,migrations/versions/,.coverage,htmlcov/,logs/,instance/,.git/ || true
+          bandit -r . --severity-level medium --exclude venv/,__pycache__/,.pytest_cache/,migrations/versions/,.coverage,htmlcov/,logs/,instance/,.git/
 
       - name: Run tests with coverage
         working-directory: ./backend
