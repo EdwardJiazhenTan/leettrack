@@ -1,21 +1,16 @@
-[bandit]
-# Exclude directories that should not be scanned for security issues
-exclude_dirs = 
-    venv/,
-    .venv/,
-    __pycache__/,
-    .pytest_cache/,
-    migrations/versions/,
-    htmlcov/,
-    logs/,
-    instance/,
-    .git/
+exclude_dirs:
+  - venv/
+  - .venv/
+  - __pycache__/
+  - .pytest_cache/
+  - migrations/versions/
+  - htmlcov/
+  - logs/
+  - instance/
+  - .git/
 
-# Skip certain tests that are commonly false positives
-skips = B101,B601
+skips:
+  - B101
+  - B601
 
-# Set severity level
-severity = medium
-
-# Output format
-format = txt
+severity: medium
