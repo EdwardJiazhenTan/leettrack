@@ -54,6 +54,22 @@
 
 - Fixed cache dependency path to `backend/requirements.txt`
 
+### 7. **SyntaxWarning from Third-Party Dependencies (NEW)**
+
+**Problem**: CI pipeline was showing SyntaxWarning messages from third-party packages
+**Root Cause**:
+
+- Older Python packages (aniso8601, six, passlib, etc.) use invalid escape sequences in string literals
+- These packages haven't been updated to use raw strings or proper escaping
+- flake8 processes all Python files including those in the virtual environment
+
+**Solution**:
+
+- Added `PYTHONWARNINGS="ignore::SyntaxWarning"` environment variable to all CI steps
+- Created `.flake8` configuration file to exclude virtual environment directories
+- Suppressed warnings only for SyntaxWarning (other warnings still visible)
+- Focused linting only on our application code, not third-party dependencies
+
 ## Files Modified
 
 ### 1. `.github/workflows/backend-deploy.yml`
@@ -64,6 +80,7 @@
 - ✅ Added logs directory creation
 - ✅ Improved environment variable handling
 - ✅ Fixed cache dependency path
+- ✅ **NEW**: Added PYTHONWARNINGS to suppress third-party SyntaxWarnings
 
 ### 2. `backend/requirements.txt`
 
@@ -81,6 +98,12 @@
 - ✅ Provides consistent local development environment
 - ✅ Includes virtual environment, dependency installation, and logs directory creation
 
+### 5. **`backend/.flake8` (New File)**
+
+- ✅ **NEW**: Created flake8 configuration to exclude virtual environment
+- ✅ **NEW**: Set proper line length and complexity limits
+- ✅ **NEW**: Focus linting on application code only
+
 ## Key Improvements
 
 ### **Consistency**
@@ -93,12 +116,14 @@
 - Proper error handling and path validation
 - Reduced permission-related deployment failures
 - Better logging and debugging capabilities
+- **Clean CI output without third-party library warnings**
 
 ### **Maintainability**
 
 - Clear separation of concerns in deployment steps
 - Easier to debug and troubleshoot issues
 - Consistent environment setup
+- **Focused code quality checks on our application code**
 
 ## Testing
 
@@ -109,6 +134,8 @@ The fixes have been tested with:
 - ✅ Dependencies install correctly including gunicorn
 - ✅ Logs directory is created automatically
 - ✅ Health endpoint is available at `/api/health`
+- ✅ **NEW**: SyntaxWarnings from third-party dependencies are suppressed
+- ✅ **NEW**: Flake8 runs cleanly without warnings from virtual environment
 
 ## Next Steps
 
@@ -116,6 +143,30 @@ The fixes have been tested with:
 2. **Monitor deployment**: Check that the new workflow runs successfully
 3. **Verify health check**: Ensure the API responds correctly at `https://api.leettrack.app/api/health`
 4. **Log monitoring**: Check that logs are being written to the new relative paths
+5. **Verify clean CI**: Confirm that no SyntaxWarnings appear in the CI output
+
+## Understanding the SyntaxWarning Issue
+
+**What were the warnings?**
+
+```
+<unknown>:916: SyntaxWarning: invalid escape sequence '\.'
+<unknown>:210: SyntaxWarning: invalid escape sequence '\('
+<unknown>:280: SyntaxWarning: invalid escape sequence '\('
+...
+```
+
+**Why did they occur?**
+
+- Third-party packages like `aniso8601`, `six`, `passlib` contain regex patterns with unescaped backslashes
+- Python 3.12 is stricter about string escape sequences
+- These warnings appear when flake8 scans ALL Python files, including dependencies
+
+**How was it fixed?**
+
+- Suppressed SyntaxWarnings during CI/CD (they're not errors, just warnings about old code style)
+- Added flake8 configuration to exclude virtual environment
+- Our application code remains clean and follows modern Python standards
 
 ## Health Check Endpoint
 

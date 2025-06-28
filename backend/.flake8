@@ -1,0 +1,25 @@
+[flake8]
+# Exclude directories that should not be linted
+exclude = 
+    venv/,
+    .venv/,
+    __pycache__/,
+    .pytest_cache/,
+    migrations/versions/,
+    .coverage,
+    htmlcov/,
+    logs/,
+    instance/,
+    .git/
+
+# Maximum line length
+max-line-length = 127
+
+# Maximum complexity
+max-complexity = 10
+
+# Select specific error codes for strict checking
+select = E9,F63,F7,F82
+
+# Ignore certain warnings
+ignore = E203,W503 
