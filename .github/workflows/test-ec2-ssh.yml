@@ -1,0 +1,68 @@
+name: Test EC2 SSH Connection
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-ec2-ssh.yml"
+
+jobs:
+  test-ssh:
+    name: Test SSH Connection to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH Connection
+        run: |
+          echo "🔧 Testing SSH connection to EC2..."
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "✅ SSH connection successful!"
+            echo "📂 Current directory: $(pwd)"
+            echo "🖥️ Hostname: $(hostname)"
+            echo "👤 User: $(whoami)"
+            echo "📅 Date: $(date)"
+            echo "🔍 LeetTrack directory check:"
+            if [ -d "LeetTrack" ]; then
+              echo "  ✅ LeetTrack directory exists"
+              cd LeetTrack
+              echo "  📂 Contents: $(ls -la | wc -l) items"
+              if [ -d "backend" ]; then
+                echo "  ✅ backend directory exists"
+                echo "  📦 Backend files: $(ls backend/ | wc -l) items"
+              else
+                echo "  ❌ backend directory missing"
+              fi
+            else
+              echo "  ❌ LeetTrack directory not found"
+            fi
+          EOF
+          echo "🎉 SSH test completed successfully!"
+
+      - name: Test System Information
+        run: |
+          echo "🖥️ Getting system information..."
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "💾 Disk usage:"
+            df -h | head -5
+            echo ""
+            echo "🧠 Memory usage:"
+            free -h
+            echo ""
+            echo "🐍 Python version:"
+            python3 --version
+            echo ""
+            echo "📦 Git status:"
+            if [ -d "LeetTrack" ]; then
+              cd LeetTrack
+              echo "  Branch: $(git branch --show-current 2>/dev/null || echo 'No git repo')"
+              echo "  Last commit: $(git log -1 --oneline 2>/dev/null || echo 'No git repo')"
+            fi
+          EOF
