@@ -144,8 +144,9 @@ jobs:
                 sudo apt install -y python3-venv
             fi
             
-            # Navigate to project directory - FIXED PATH
-            cd LeetTrack/backend
+            # Navigate to project directory
+            echo "📂 Navigating to LeetTrack directory..."
+            cd LeetTrack
             
             # Debug: Check current directory structure
             echo "📂 Current directory: $(pwd)"
@@ -154,7 +155,6 @@ jobs:
             
             # Check Git repository status
             echo "🔍 Git repository diagnosis:"
-            cd ..  # Go to LeetTrack root for git operations
             echo "Branch: $(git branch --show-current)"
             echo "Remote URL: $(git remote get-url origin)"
             echo "Last commit: $(git log -1 --oneline)"
