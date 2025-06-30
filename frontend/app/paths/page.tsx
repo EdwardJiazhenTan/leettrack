@@ -39,7 +39,7 @@ export default function PathsPage() {
   useEffect(() => {
     const fetchPaths = async () => {
       try {
-        const response = await fetch(getApiUrl("/learning-paths"));
+        const response = await fetch(getApiUrl("/api/v1/learning-paths"));
         if (response.ok) {
           const result = await response.json();
           if (result.status === "success") {

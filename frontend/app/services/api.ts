@@ -272,7 +272,7 @@ export async function postApiWithAuth<T, D>(
  * API functions for LeetCode
  */
 export const leetcodeApi = {
-  getDailyQuestion: () => fetchApi("/leetcode/daily"),
+  getDailyQuestion: () => fetchApi("/api/v1/leetcode/daily"),
   getProblems: (limit = 20, skip = 0, tags?: string, difficulty?: string) => {
     const params = new URLSearchParams();
     params.append("limit", limit.toString());
@@ -280,11 +280,11 @@ export const leetcodeApi = {
     if (tags) params.append("tags", tags);
     if (difficulty) params.append("difficulty", difficulty);
 
-    return fetchApi(`/leetcode/problems?${params.toString()}`);
+    return fetchApi(`/api/v1/leetcode/problems?${params.toString()}`);
   },
   getProblemBySlug: (titleSlug: string) =>
-    fetchApi(`/leetcode/problem/${titleSlug}`),
-  getUserProfileStats: () => fetchApiWithAuth("/leetcode/profile/stats"),
+    fetchApi(`/api/v1/leetcode/problem/${titleSlug}`),
+  getUserProfileStats: () => fetchApiWithAuth("/api/v1/leetcode/profile/stats"),
 };
 
 /**
@@ -307,29 +307,29 @@ export const learningPathsApi = {
       });
     }
 
-    return fetchApi(`/learning-paths?${queryParams.toString()}`);
+    return fetchApi(`/api/v1/learning-paths?${queryParams.toString()}`);
   },
-  getPathDetails: (pathId: number) => fetchApi(`/learning-paths/${pathId}`),
+  getPathDetails: (pathId: number) => fetchApi(`/api/v1/learning-paths/${pathId}`),
 };
 
 /**
  * API functions for Authentication and User Data
  */
 export const authApi = {
-  getTodaysReviews: () => fetchApiWithAuth("/auth/user/reviews/today"),
+  getTodaysReviews: () => fetchApiWithAuth("/api/v1/auth/user/reviews/today"),
   getQuestionsNeedingRating: () =>
-    fetchApiWithAuth("/auth/user/questions/need-rating"),
-  getDashboardSummary: () => fetchApiWithAuth("/auth/user/dashboard/summary"),
+    fetchApiWithAuth("/api/v1/auth/user/questions/need-rating"),
+  getDashboardSummary: () => fetchApiWithAuth("/api/v1/auth/user/dashboard/summary"),
   rateQuestion: (
     userQuestionId: number,
     data: { confidence: string; notes?: string }
-  ) => postApiWithAuth(`/auth/user/questions/${userQuestionId}/rate`, data),
+  ) => postApiWithAuth(`/api/v1/auth/user/questions/${userQuestionId}/rate`, data),
   completeReview: (
     userQuestionId: number,
     data: { confidence?: string; notes?: string }
   ) =>
     postApiWithAuth(
-      `/auth/user/questions/${userQuestionId}/complete-review`,
+      `/api/v1/auth/user/questions/${userQuestionId}/complete-review`,
       data
     ),
   /**
