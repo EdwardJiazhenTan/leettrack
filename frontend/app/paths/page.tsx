@@ -43,7 +43,7 @@ export default function PathsPage() {
         if (response.ok) {
           const result = await response.json();
           if (result.status === "success") {
-            setPaths(result.data);
+            setPaths(result.data.learning_paths || []);
           } else {
             console.error("Failed to fetch paths:", result.message);
           }

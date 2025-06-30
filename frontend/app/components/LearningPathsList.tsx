@@ -15,7 +15,9 @@ interface LearningPath {
 
 interface LearningPathsResponse {
   status: string;
-  data: LearningPath[];
+  data: {
+    learning_paths: LearningPath[];
+  };
 }
 
 export default function LearningPathsList() {
@@ -58,7 +60,7 @@ export default function LearningPathsList() {
     );
   }
 
-  if (!pathsData || !pathsData.data || pathsData.data.length === 0) {
+  if (!pathsData || !pathsData.data || !pathsData.data.learning_paths || pathsData.data.learning_paths.length === 0) {
     return (
       <div className="p-4 bg-[#1e1e2e] border-4 border-[#45475a] shadow-[3px_3px_0px_0px_#11111b]">
         <p className="text-[#a6adc8] font-mono">
@@ -74,7 +76,7 @@ export default function LearningPathsList() {
         [LEARNING_PATHS]
       </h2>
       <div className="space-y-4">
-        {pathsData.data.map((path) => (
+        {pathsData.data.learning_paths.map((path) => (
           <div
             key={path.path_id}
             className="p-3 bg-[#313244] border-2 border-[#45475a] hover:border-[#89b4fa] transition-all duration-200 shadow-[2px_2px_0px_0px_#11111b]"
