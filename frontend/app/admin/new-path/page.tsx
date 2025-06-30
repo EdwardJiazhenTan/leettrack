@@ -38,7 +38,7 @@ export default function NewPathPage() {
 
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(getApiUrl("/admin/learning-paths"), {
+      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

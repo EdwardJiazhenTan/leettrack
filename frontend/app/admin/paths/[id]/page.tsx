@@ -91,7 +91,7 @@ export default function PathEditor() {
     setSaving(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+      const res = await fetch(getApiUrl(`/api/v1/admin/learning-paths/${pathId}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -124,7 +124,7 @@ export default function PathEditor() {
         Math.max(0, ...path.questions.map((q) => q.sequence_number)) + 1;
 
       const res = await fetch(
-        getApiUrl(`/admin/learning-paths/${pathId}/questions`),
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions`),
         {
           method: "POST",
           headers: {
@@ -167,7 +167,7 @@ export default function PathEditor() {
 
       const res = await fetch(
         getApiUrl(
-          `/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`
+          `/api/v1/admin/learning-paths/${pathId}/questions/${pathQuestion.sequence_number}`
         ), // Using sequence_number as path_question_id for now
         {
           method: "DELETE",
@@ -196,7 +196,7 @@ export default function PathEditor() {
       }));
 
       const res = await fetch(
-        getApiUrl(`/admin/learning-paths/${pathId}/questions/reorder`),
+        getApiUrl(`/api/v1/admin/learning-paths/${pathId}/questions/reorder`),
         {
           method: "PUT",
           headers: {

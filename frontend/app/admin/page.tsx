@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const fetchPaths = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl("/admin/learning-paths"), {
+      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths"), {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     setBulkCreating(pathType);
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl("/admin/learning-paths/bulk-create"), {
+      const res = await fetch(getApiUrl("/api/v1/admin/learning-paths/bulk-create"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
   const handleToggleStatus = async (pathId: number, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+      const res = await fetch(getApiUrl(`/api/v1/admin/learning-paths/${pathId}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(getApiUrl(`/admin/learning-paths/${pathId}`), {
+      const res = await fetch(getApiUrl(`/api/v1/admin/learning-paths/${pathId}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
