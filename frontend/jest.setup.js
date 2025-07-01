@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom'
 
+// Mock React.act to avoid warnings in React 19
+import { act } from 'react'
+global.act = act
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
