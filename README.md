@@ -1,95 +1,36 @@
-# [🌐 LeetTrack.app](https://leettrack.app)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A comprehensive LeetCode progress tracking and learning path management system with curated company-specific, topic-specific, and pattern-based learning paths.
+## Getting Started
 
-## 🚀 How to Run
+First, run the development server:
 
-### Prerequisites
-- Python 3.8+
-- Node.js 18+
-- PostgreSQL 12+
-
-### Backend Setup
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Setup database
-export DATABASE_URL="postgresql://username:password@localhost/leettrack"
-export JWT_SECRET_KEY="your-secret-key"
-export FLASK_ENV="development"
-flask db upgrade
-
-# Populate learning paths
-python scripts/populate_comprehensive_paths.py
-
-# Start server
-python app.py
-```
-
-### Frontend Setup
-```bash
-cd frontend
-npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Quick Start (Both servers)
-```bash
-./run_dev.sh
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🚀 How to Deploy
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### Production Environment Variables
-```bash
-# Backend
-export FLASK_ENV="production"
-export DATABASE_URL="postgresql://user:pass@prod-db:5432/leettrack"
-export JWT_SECRET_KEY="secure-random-key"
-export CORS_ORIGINS="https://your-domain.com"
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-# Frontend
-export NEXT_PUBLIC_API_URL="https://api.your-domain.com"
-```
+## Learn More
 
-### Backend Deployment (EC2)
-```bash
-cd backend
-chmod +x deploy.sh
-./deploy.sh
-```
+To learn more about Next.js, take a look at the following resources:
 
-### Frontend Deployment (Vercel)
-- Push to main branch (GitHub Actions will auto-deploy)
-- Or manually: `npx vercel --prod`
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## 📸 Screenshots & Examples
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### Homepage - Terminal-Inspired Interface
-![Homepage Screenshot](screenshots/screenshots1.png)
+## Deploy on Vercel
 
-### Learning Paths - Structured Learning
-![Learning Paths Screenshot](screenshots/screenshot2.png)
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-### Profile Dashboard - Progress Analytics
-![Profile Dashboard Screenshot](screenshots/screenshot3.png)
-
-## 🎯 Learning Path Examples
-
-### Company Interview Preparation
-- **Amazon Interview Prep**: Leadership principles, system design (15 questions)
-- **Meta Interview Prep**: Social graph algorithms, optimization (15 questions)
-- **Uber Interview Prep**: Geolocation algorithms, real-time processing (15 questions)
-
-### Topic Mastery
-- **Binary Search Mastery**: Basic to advanced applications (10 questions)
-- **Dynamic Programming**: All major DP patterns (15 questions)
-- **Graph Algorithms**: DFS, BFS, shortest paths (15 questions)
-
-### Pattern Recognition
-- **LeetCode 101 Patterns**: Fundamental algorithm patterns (24 questions)
-- **Grokking Interview Patterns**: 14 essential coding patterns (21 questions)
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
