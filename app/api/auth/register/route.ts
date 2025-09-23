@@ -3,6 +3,7 @@ import {
   createUser,
   checkEmailExists,
   checkUsernameExists,
+  checkLeetCodeUsernameExists,
   createSession
 } from '../../../../lib/auth';
 import type { CreateUserRequest, AuthResponse } from '../../../../types/user';
@@ -67,8 +68,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if LeetCode username already exists (if provided)
+    if (body.leetcode_username && checkLeetCodeUsernameExists(body.leetcode_username)) {
+      return NextResponse.json<AuthResponse>(
+        {
+          success: false,
+          message: 'LeetCode username already linked to another account'
+        },
+        { status: 409 }
+      );
+    }
+
     // Create user
-    const user = createUser({
+    const user = await createUser({
       email: body.email,
       username: body.username,
       password: body.password,

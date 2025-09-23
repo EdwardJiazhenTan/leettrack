@@ -131,6 +131,15 @@ const QUESTIONS_BY_TAG_QUERY = `
   }
 `;
 
+const ALL_QUESTIONS_COUNT_QUERY = `
+  query allQuestionsCount {
+    allQuestionsCount {
+      difficulty
+      count
+    }
+  }
+`;
+
 const USER_PROFILE_QUERY = `
   query userProfile($username: String!) {
     allQuestionsCount {
@@ -320,6 +329,44 @@ export async function getQuestionsByTag(tags: string[], limit: number = 20, skip
     }
 
     return data.data.problemsetQuestionList;
+  } catch (error) {
+    return {
+      error: 'Network error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function getAllQuestionsCount() {
+  try {
+    const response = await fetch(LEETCODE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: ALL_QUESTIONS_COUNT_QUERY,
+        operationName: 'allQuestionsCount'
+      }),
+    });
+
+    if (!response.ok) {
+      return {
+        error: `HTTP ${response.status}: ${response.statusText}`,
+        details: 'Failed to fetch questions count from leetcode api'
+      };
+    }
+
+    const data = await response.json();
+
+    if (data.errors) {
+      return {
+        error: 'GraphQL API error',
+        details: data.errors[0]?.message || 'Unknown GraphQL error'
+      };
+    }
+
+    return data.data.allQuestionsCount;
   } catch (error) {
     return {
       error: 'Network error',

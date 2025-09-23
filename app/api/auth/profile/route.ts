@@ -4,8 +4,10 @@ import {
   findUserById,
   updateUser,
   checkUsernameExists,
-  checkEmailExists
+  checkEmailExists,
+  getUserStats
 } from '../../../../lib/auth';
+import { getUserProfile as getLeetCodeProfile } from '../../../../lib/leetcode-client';
 import type { UpdateUserRequest, UserProfile, ApiError } from '../../../../types/user';
 
 export async function GET(request: NextRequest) {
@@ -32,18 +34,55 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mock user stats - in a real app, these would come from database queries
-    const stats = {
-      total_questions_attempted: 75,
-      total_questions_solved: 45,
-      easy_solved: 20,
-      medium_solved: 18,
-      hard_solved: 7,
-      current_streak: 7,
-      longest_streak: 14,
-      enrolled_paths: 3,
-      completed_paths: 1,
-    };
+    let stats = getUserStats(user_id);
+
+    // If user has a LeetCode username, fetch real stats from LeetCode
+    if (user.leetcode_username) {
+      try {
+        const leetcodeData = await getLeetCodeProfile(user.leetcode_username);
+
+        if (!('error' in leetcodeData)) {
+          // Extract stats from LeetCode API response
+          const { user: leetcodeUser, allQuestionsCount } = leetcodeData;
+
+          // Map LeetCode stats to our format
+          const totalEasy = allQuestionsCount.find((q: any) => q.difficulty === 'Easy')?.count || 0;
+          const totalMedium = allQuestionsCount.find((q: any) => q.difficulty === 'Medium')?.count || 0;
+          const totalHard = allQuestionsCount.find((q: any) => q.difficulty === 'Hard')?.count || 0;
+
+          const solvedEasy = leetcodeUser.submitStats.acSubmissionNum.find((s: any) => s.difficulty === 'Easy')?.count || 0;
+          const solvedMedium = leetcodeUser.submitStats.acSubmissionNum.find((s: any) => s.difficulty === 'Medium')?.count || 0;
+          const solvedHard = leetcodeUser.submitStats.acSubmissionNum.find((s: any) => s.difficulty === 'Hard')?.count || 0;
+
+          const totalSolved = solvedEasy + solvedMedium + solvedHard;
+          const totalQuestions = totalEasy + totalMedium + totalHard;
+
+          // TODO: For production, implement proper streak calculation from submission calendar
+          // For now, use stored streak data or calculate from submission calendar
+          const currentStreak = stats.current_streak; // Keep existing streak logic
+          const longestStreak = stats.longest_streak; // Keep existing streak logic
+
+          stats = {
+            total_questions_attempted: totalSolved, // LeetCode doesn't track attempts separately
+            total_questions_solved: totalSolved,
+            easy_solved: solvedEasy,
+            medium_solved: solvedMedium,
+            hard_solved: solvedHard,
+            current_streak: currentStreak,
+            longest_streak: longestStreak,
+            enrolled_paths: stats.enrolled_paths, // Keep app-specific data
+            completed_paths: stats.completed_paths, // Keep app-specific data
+            last_activity_date: new Date().toISOString(),
+          };
+        } else {
+          console.warn(`Failed to fetch LeetCode stats for ${user.leetcode_username}:`, leetcodeData.error);
+          // Fall back to stored stats if LeetCode API fails
+        }
+      } catch (error) {
+        console.error('Error fetching LeetCode profile:', error);
+        // Fall back to stored stats if there's an error
+      }
+    }
 
     const profile: UserProfile = {
       user,

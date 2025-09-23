@@ -1,70 +1,87 @@
+'use client'
 import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export default function LandingPage() {
+  const [inputText, setInputText] = useState('');
+  const router = useRouter();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputText.trim()) {
+      router.push(`/stats/${encodeURIComponent(inputText)}`);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white text-black">
-      <nav className="border-b border-black p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">LeetTrack</h1>
-          <div className="space-x-4">
-            <Link href="/auth/login" className="px-4 py-2 border border-black hover:bg-black hover:text-white transition-colors">
-              Login
-            </Link>
-            <Link href="/auth/register" className="px-4 py-2 bg-black text-white hover:bg-gray-800 transition-colors">
-              Register
-            </Link>
+    <div className={`${inter.className} min-h-screen bg-gray-50`}>
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-light text-gray-900">LeetTrack</h1>
+            <div className="flex gap-4">
+              <Link
+                href="/auth/login"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/register"
+                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Register
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto py-16 px-4">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Structured LeetCode Learning</h1>
-          <p className="text-xl text-black mb-8">
-            Master coding interviews through admin-curated learning paths and personalized daily study plans
+      {/* Hero Section */}
+      <div className="max-w-4xl mx-auto px-4 py-32">
+        <div className="text-center">
+          <h2 className="text-5xl font-light text-gray-900 mb-6">
+            Track Your LeetCode Journey
+          </h2>
+          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Track and review your LeetCode questions all in one place.
           </p>
-          <Link
-            href="/auth/register"
-            className="inline-block px-8 py-4 bg-black text-white text-lg hover:bg-gray-800 transition-colors"
-          >
-            Get Started
-          </Link>
-        </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="border border-black p-6">
-            <h3 className="text-xl font-bold mb-4">Curated Learning Paths</h3>
-            <p className="text-black">
-              Quality-controlled curriculum designed by experts for different topics and skill levels
-            </p>
-          </div>
-          <div className="border border-black p-6">
-            <h3 className="text-xl font-bold mb-4">Daily Planning</h3>
-            <p className="text-black">
-              Set custom daily quotas for new problems and reviews with intelligent recommendations
-            </p>
-          </div>
-          <div className="border border-black p-6">
-            <h3 className="text-xl font-bold mb-4">Progress Tracking</h3>
-            <p className="text-black">
-              Comprehensive analytics and spaced repetition system for optimal learning retention
-            </p>
-          </div>
+          {/* Search Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Enter LeetCode username"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              >
+                View Stats
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
 
-        <div className="border border-black p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to start your coding journey?</h2>
-          <p className="text-black mb-6">
-            Join LeetTrack and transform your interview preparation with structured learning
-          </p>
-          <Link
-            href="/auth/register"
-            className="px-6 py-3 bg-black text-white hover:bg-gray-800 transition-colors"
-          >
-            Create Account
-          </Link>
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center text-gray-500">
+            <p>Built for developers who want to track their coding progress effectively.</p>
+          </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }
