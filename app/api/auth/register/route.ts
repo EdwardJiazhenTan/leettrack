@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    if (checkEmailExists(body.email)) {
+    if (await checkEmailExists(body.email)) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username already exists
-    if (checkUsernameExists(body.username)) {
+    if (await checkUsernameExists(body.username)) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if LeetCode username already exists (if provided)
-    if (body.leetcode_username && checkLeetCodeUsernameExists(body.leetcode_username)) {
+    if (body.leetcode_username && await checkLeetCodeUsernameExists(body.leetcode_username)) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
+    console.error('Registration error:', error);
     return NextResponse.json<AuthResponse>(
       {
         success: false,

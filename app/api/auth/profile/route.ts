@@ -12,8 +12,8 @@ import type { UpdateUserRequest, UserProfile, ApiError } from '../../../../types
 
 export async function GET(request: NextRequest) {
   try {
-    const user_id = getUserFromRequest(request);
-    if (!user_id) {
+    const userAuth = getUserFromRequest(request);
+    if (!userAuth) {
       return NextResponse.json<ApiError>(
         {
           status: 'error',
@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = findUserById(user_id);
+    // Handle backward compatibility - userAuth might be string or object
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
+
+    const user = await findUserById(user_id);
     if (!user) {
       return NextResponse.json<ApiError>(
         {
@@ -34,7 +37,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let stats = getUserStats(user_id);
+    let stats = await getUserStats(user_id);
 
     // If user has a LeetCode username, fetch real stats from LeetCode
     if (user.leetcode_username) {
@@ -104,8 +107,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const user_id = getUserFromRequest(request);
-    if (!user_id) {
+    const userAuth = getUserFromRequest(request);
+    if (!userAuth) {
       return NextResponse.json<ApiError>(
         {
           status: 'error',
@@ -115,7 +118,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const user = findUserById(user_id);
+    // Handle backward compatibility - userAuth might be string or object
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
+
+    const user = await findUserById(user_id);
     if (!user) {
       return NextResponse.json<ApiError>(
         {
@@ -142,7 +148,7 @@ export async function PUT(request: NextRequest) {
       }
 
       // Check if email is already taken by another user
-      const existingUser = checkEmailExists(body.email);
+      const existingUser = await checkEmailExists(body.email);
       if (existingUser && body.email !== user.email) {
         return NextResponse.json<ApiError>(
           {
@@ -156,7 +162,7 @@ export async function PUT(request: NextRequest) {
 
     // Check if username is already taken by another user
     if (body.username) {
-      const existingUser = checkUsernameExists(body.username);
+      const existingUser = await checkUsernameExists(body.username);
       if (existingUser && body.username !== user.username) {
         return NextResponse.json<ApiError>(
           {
@@ -168,7 +174,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const updatedUser = updateUser(user_id, body);
+    const updatedUser = await updateUser(user_id, body);
     if (!updatedUser) {
       return NextResponse.json<ApiError>(
         {

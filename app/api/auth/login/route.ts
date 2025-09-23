@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const userWithPassword = findUserByEmail(body.email);
+    const userWithPassword = await findUserByEmail(body.email);
     if (!userWithPassword) {
       return NextResponse.json<AuthResponse>(
         {
@@ -34,6 +34,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
+    if (!userWithPassword.password_hash) {
+      console.error('Password hash is missing for user:', userWithPassword.user_id);
+      return NextResponse.json<AuthResponse>(
+        {
+          success: false,
+          message: 'Invalid email or password'
+        },
+        { status: 401 }
+      );
+    }
+
     const isValidPassword = await verifyPassword(body.password, userWithPassword.password_hash);
     if (!isValidPassword) {
       return NextResponse.json<AuthResponse>(
@@ -69,6 +80,7 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
+    console.error('Login error:', error);
     return NextResponse.json<AuthResponse>(
       {
         success: false,

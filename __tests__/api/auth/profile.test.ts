@@ -9,7 +9,8 @@ import {
   findUserById,
   updateUser,
   checkUsernameExists,
-  checkEmailExists
+  checkEmailExists,
+  getUserStats
 } from '../../../lib/auth';
 
 const mockedGetUserFromRequest = getUserFromRequest as jest.MockedFunction<typeof getUserFromRequest>;
@@ -17,6 +18,7 @@ const mockedFindUserById = findUserById as jest.MockedFunction<typeof findUserBy
 const mockedUpdateUser = updateUser as jest.MockedFunction<typeof updateUser>;
 const mockedCheckUsernameExists = checkUsernameExists as jest.MockedFunction<typeof checkUsernameExists>;
 const mockedCheckEmailExists = checkEmailExists as jest.MockedFunction<typeof checkEmailExists>;
+const mockedGetUserStats = getUserStats as jest.MockedFunction<typeof getUserStats>;
 
 describe('/api/auth/profile', () => {
   beforeEach(() => {
@@ -28,6 +30,7 @@ describe('/api/auth/profile', () => {
       // Arrange
       mockedGetUserFromRequest.mockReturnValue('user_123');
       mockedFindUserById.mockReturnValue(mockUser);
+      mockedGetUserStats.mockReturnValue(mockUserProfile.stats);
 
       const request = new Request('http://localhost:3000/api/auth/profile', {
         method: 'GET',
