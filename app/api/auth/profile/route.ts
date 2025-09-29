@@ -7,13 +7,9 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Profile endpoint hit");
-
     const userAuth = getUserFromRequest(request);
-    console.log("User auth:", userAuth);
 
     if (!userAuth) {
-      console.log("No user auth found");
       return NextResponse.json(
         {
           success: false,
@@ -25,13 +21,10 @@ export async function GET(request: NextRequest) {
 
     // Handle backward compatibility - userAuth might be string or object
     const user_id = typeof userAuth === "string" ? userAuth : userAuth.user_id;
-    console.log("User ID:", user_id);
 
     const user = await findUserById(user_id);
-    console.log("Found user:", user);
 
     if (!user) {
-      console.log("User not found in database");
       return NextResponse.json(
         {
           success: false,
@@ -42,7 +35,6 @@ export async function GET(request: NextRequest) {
     }
 
     const stats = await getUserStats(user_id);
-    console.log("User stats:", stats);
 
     return NextResponse.json(
       {

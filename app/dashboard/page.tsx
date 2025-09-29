@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Inter } from 'next/font/google';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 interface User {
   user_id: string;
@@ -25,35 +25,35 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-          router.push('/auth/login');
+          router.push("/auth/login");
           return;
         }
 
-        const response = await fetch('/api/auth/profile', {
+        const response = await fetch("/api/auth/profile", {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem('token');
-            router.push('/auth/login');
+            localStorage.removeItem("token");
+            router.push("/auth/login");
             return;
           }
-          throw new Error('Failed to fetch profile');
+          throw new Error("Failed to fetch profile");
         }
 
         const data = await response.json();
         if (data.success) {
           setUser(data.user);
         } else {
-          throw new Error(data.message || 'Failed to fetch profile');
+          throw new Error(data.message || "Failed to fetch profile");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -64,26 +64,28 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
+        await fetch("/api/auth/logout", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem('token');
-      router.push('/');
+      localStorage.removeItem("token");
+      router.push("/");
     }
   };
 
   if (loading) {
     return (
-      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
         <div className="animate-pulse text-gray-600">Loading...</div>
       </div>
     );
@@ -91,7 +93,9 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
         <div className="text-red-600 bg-white p-6 rounded-lg shadow-sm border">
           Error: {error}
         </div>
@@ -101,7 +105,9 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
         <div className="text-gray-600 bg-white p-6 rounded-lg shadow-sm border">
           User not found
         </div>
@@ -135,37 +141,57 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-light text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Track your LeetCode progress and manage your account</p>
+          <p className="text-gray-600">
+            Track your LeetCode progress and manage your account
+          </p>
         </div>
 
         {/* Profile Card */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 className="text-xl font-light text-gray-900 mb-4">Profile Information</h2>
+          <h2 className="text-xl font-light text-gray-900 mb-4">
+            Profile Information
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Username
+              </label>
               <p className="text-gray-900">{user.username}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <p className="text-gray-900">{user.email}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LeetCode Username</label>
-              <p className="text-gray-900">{user.leetcode_username || 'Not set'}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                LeetCode Username
+              </label>
+              <p className="text-gray-900">
+                {user.leetcode_username || "Not set"}
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
-              <p className="text-gray-900">{new Date(user.created_at).toLocaleDateString()}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Member Since
+              </label>
+              <p className="text-gray-900">
+                {new Date(user.created_at).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-light text-gray-900 mb-2">View Stats</h3>
-            <p className="text-gray-600 mb-4">Check your LeetCode progress and statistics</p>
+            <h3 className="text-lg font-light text-gray-900 mb-2">
+              View Stats
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Check your LeetCode progress and statistics
+            </p>
             {user.leetcode_username ? (
               <Link
                 href={`/stats/${user.leetcode_username}`}
@@ -174,13 +200,19 @@ export default function Dashboard() {
                 View My Stats
               </Link>
             ) : (
-              <p className="text-gray-500 text-sm">Set your LeetCode username to view stats</p>
+              <p className="text-gray-500 text-sm">
+                Set your LeetCode username to view stats
+              </p>
             )}
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-light text-gray-900 mb-2">Search User</h3>
-            <p className="text-gray-600 mb-4">Look up other users' LeetCode statistics</p>
+            <h3 className="text-lg font-light text-gray-900 mb-2">
+              Search User
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Look up other users' LeetCode statistics
+            </p>
             <Link
               href="/"
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors inline-block"
@@ -190,8 +222,27 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-light text-gray-900 mb-2">Edit Profile</h3>
-            <p className="text-gray-600 mb-4">Update your profile information</p>
+            <h3 className="text-lg font-light text-gray-900 mb-2">
+              Browse Questions
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Explore coding problems and practice
+            </p>
+            <Link
+              href="/questions"
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors inline-block"
+            >
+              View Questions
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h3 className="text-lg font-light text-gray-900 mb-2">
+              Edit Profile
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Update your profile information
+            </p>
             <button
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
               disabled
@@ -203,10 +254,14 @@ export default function Dashboard() {
 
         {/* Recent Activity Placeholder */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mt-6">
-          <h2 className="text-xl font-light text-gray-900 mb-4">Recent Activity</h2>
+          <h2 className="text-xl font-light text-gray-900 mb-4">
+            Recent Activity
+          </h2>
           <div className="text-gray-500 text-center py-8">
             <p>No recent activity to display</p>
-            <p className="text-sm mt-2">Start solving problems to see your progress here!</p>
+            <p className="text-sm mt-2">
+              Start solving problems to see your progress here!
+            </p>
           </div>
         </div>
       </div>

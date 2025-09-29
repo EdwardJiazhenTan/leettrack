@@ -1,12 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest } from '../../../lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { getUserFromRequest } from "../../../lib/auth";
 import {
   createQuestion,
   searchQuestions,
   checkSlugExists,
-  getQuestionStats
-} from '../../../lib/questions';
-import type { CreateQuestionRequest, QuestionSearchParams, QuestionListResponse, QuestionStats, ApiError } from '../../../types/question';
+  getQuestionStats,
+} from "../../../lib/questions-db";
+import type {
+  CreateQuestionRequest,
+  QuestionSearchParams,
+  QuestionListResponse,
+  QuestionStats,
+  ApiError,
+} from "../../../types/question";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,39 +20,59 @@ export async function GET(request: NextRequest) {
 
     // Parse search parameters
     const params: QuestionSearchParams = {
-      query: searchParams.get('query') || undefined,
-      difficulty: (searchParams.get('difficulty') as 'Easy' | 'Medium' | 'Hard') || undefined,
-      tags: searchParams.get('tags') ? searchParams.get('tags')!.split(',').map(tag => tag.trim()) : undefined,
-      is_custom: searchParams.get('is_custom') ? searchParams.get('is_custom') === 'true' : undefined,
-      created_by: searchParams.get('created_by') || undefined,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined,
-      offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!, 10) : undefined,
-      sort_by: (searchParams.get('sort_by') as 'title' | 'difficulty' | 'created_at' | 'updated_at') || undefined,
-      sort_order: (searchParams.get('sort_order') as 'asc' | 'desc') || undefined,
+      query: searchParams.get("query") || undefined,
+      difficulty:
+        (searchParams.get("difficulty") as "Easy" | "Medium" | "Hard") ||
+        undefined,
+      tags: searchParams.get("tags")
+        ? searchParams
+            .get("tags")!
+            .split(",")
+            .map((tag) => tag.trim())
+        : undefined,
+      is_custom: searchParams.get("is_custom")
+        ? searchParams.get("is_custom") === "true"
+        : undefined,
+      created_by: searchParams.get("created_by") || undefined,
+      limit: searchParams.get("limit")
+        ? parseInt(searchParams.get("limit")!, 10)
+        : undefined,
+      offset: searchParams.get("offset")
+        ? parseInt(searchParams.get("offset")!, 10)
+        : undefined,
+      sort_by:
+        (searchParams.get("sort_by") as
+          | "title"
+          | "difficulty"
+          | "created_at"
+          | "updated_at") || undefined,
+      sort_order:
+        (searchParams.get("sort_order") as "asc" | "desc") || undefined,
     };
 
     // Validate limit
     if (params.limit && params.limit > 100) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Limit cannot exceed 100'
+          status: "error",
+          message: "Limit cannot exceed 100",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const result = searchQuestions(params);
+    const result = await searchQuestions(params);
+    console.log("Questions API - Search params:", params);
+    console.log("Questions API - Result:", result);
 
     return NextResponse.json<QuestionListResponse>(result, { status: 200 });
-
   } catch (error) {
     return NextResponse.json<ApiError>(
       {
-        status: 'error',
-        message: 'An error occurred while fetching questions'
+        status: "error",
+        message: "An error occurred while fetching questions",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -57,10 +83,10 @@ export async function POST(request: NextRequest) {
     if (!user_id) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Authentication required'
+          status: "error",
+          message: "Authentication required",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -70,21 +96,21 @@ export async function POST(request: NextRequest) {
     if (!body.title || !body.slug || !body.difficulty) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Title, slug, and difficulty are required'
+          status: "error",
+          message: "Title, slug, and difficulty are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate difficulty
-    if (!['Easy', 'Medium', 'Hard'].includes(body.difficulty)) {
+    if (!["Easy", "Medium", "Hard"].includes(body.difficulty)) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Difficulty must be Easy, Medium, or Hard'
+          status: "error",
+          message: "Difficulty must be Easy, Medium, or Hard",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,21 +119,22 @@ export async function POST(request: NextRequest) {
     if (!slugRegex.test(body.slug)) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Slug must contain only lowercase letters, numbers, and hyphens'
+          status: "error",
+          message:
+            "Slug must contain only lowercase letters, numbers, and hyphens",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Check if slug already exists
-    if (checkSlugExists(body.slug)) {
+    if (await checkSlugExists(body.slug)) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'A question with this slug already exists'
+          status: "error",
+          message: "A question with this slug already exists",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -115,24 +142,23 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(body.tags)) {
       return NextResponse.json<ApiError>(
         {
-          status: 'error',
-          message: 'Tags must be an array'
+          status: "error",
+          message: "Tags must be an array",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const question = createQuestion(body, user_id);
+    const question = await createQuestion(body, user_id);
 
     return NextResponse.json(question, { status: 201 });
-
   } catch (error) {
     return NextResponse.json<ApiError>(
       {
-        status: 'error',
-        message: 'An error occurred while creating the question'
+        status: "error",
+        message: "An error occurred while creating the question",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
