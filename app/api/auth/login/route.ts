@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import {
   findUserByEmail,
   verifyPassword,
-  createSession
-} from '../../../../lib/auth';
-import type { LoginRequest, AuthResponse } from '../../../../types/user';
+  createSession,
+} from "../../../../lib/auth";
+import type { LoginRequest, AuthResponse } from "../../../../types/user";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,9 +15,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Email and password are required'
+          message: "Email and password are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,37 +27,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Invalid email or password'
+          message: "Invalid email or password",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Verify password
     if (!userWithPassword.password_hash) {
-      console.error('Password hash is missing for user:', userWithPassword.user_id);
+      console.error(
+        "Password hash is missing for user:",
+        userWithPassword.user_id,
+      );
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Invalid email or password'
+          message: "Invalid email or password",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    const isValidPassword = await verifyPassword(body.password, userWithPassword.password_hash);
+    const isValidPassword = await verifyPassword(
+      body.password,
+      userWithPassword.password_hash,
+    );
     if (!isValidPassword) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Invalid email or password'
+          message: "Invalid email or password",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Create session token
-    const token = createSession(userWithPassword.user_id);
+    const token = createSession(
+      userWithPassword.user_id,
+      userWithPassword.email,
+    );
 
     // Return user data (without password)
     const user = {
@@ -74,19 +83,18 @@ export async function POST(request: NextRequest) {
         success: true,
         user,
         token,
-        message: 'Login successful'
+        message: "Login successful",
       },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     return NextResponse.json<AuthResponse>(
       {
         success: false,
-        message: 'An error occurred during login'
+        message: "An error occurred during login",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

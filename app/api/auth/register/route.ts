@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import {
   createUser,
   checkEmailExists,
   checkUsernameExists,
   checkLeetCodeUsernameExists,
-  createSession
-} from '../../../../lib/auth';
-import type { CreateUserRequest, AuthResponse } from '../../../../types/user';
+  createSession,
+} from "../../../../lib/auth";
+import type { CreateUserRequest, AuthResponse } from "../../../../types/user";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Email, username, and password are required'
+          message: "Email, username, and password are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Invalid email format'
+          message: "Invalid email format",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Password must be at least 6 characters long'
+          message: "Password must be at least 6 characters long",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Email already registered'
+          message: "Email already registered",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -62,20 +62,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'Username already taken'
+          message: "Username already taken",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     // Check if LeetCode username already exists (if provided)
-    if (body.leetcode_username && await checkLeetCodeUsernameExists(body.leetcode_username)) {
+    if (
+      body.leetcode_username &&
+      (await checkLeetCodeUsernameExists(body.leetcode_username))
+    ) {
       return NextResponse.json<AuthResponse>(
         {
           success: false,
-          message: 'LeetCode username already linked to another account'
+          message: "LeetCode username already linked to another account",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -84,30 +87,29 @@ export async function POST(request: NextRequest) {
       email: body.email,
       username: body.username,
       password: body.password,
-      leetcode_username: body.leetcode_username
+      leetcode_username: body.leetcode_username,
     });
 
     // Create session token
-    const token = createSession(user.user_id);
+    const token = createSession(user.user_id, user.email);
 
     return NextResponse.json<AuthResponse>(
       {
         success: true,
         user,
         token,
-        message: 'User registered successfully'
+        message: "User registered successfully",
       },
-      { status: 201 }
+      { status: 201 },
     );
-
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return NextResponse.json<AuthResponse>(
       {
         success: false,
-        message: 'An error occurred during registration'
+        message: "An error occurred during registration",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
