@@ -1,13 +1,14 @@
-'use client'
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Inter } from 'next/font/google';
+"use client";
+import Link from "next/link";
 
-const inter = Inter({ subsets: ['latin'] });
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function LandingPage() {
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -27,7 +28,7 @@ export default function LandingPage() {
             <div className="flex gap-4">
               <Link
                 href="/auth/login"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors flex items-center"
               >
                 Login
               </Link>
@@ -78,7 +79,10 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-gray-200 mt-auto">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="text-center text-gray-500">
-            <p>Built for developers who want to track their coding progress effectively.</p>
+            <p>
+              Built for developers who want to track their coding progress
+              effectively.
+            </p>
           </div>
         </div>
       </footer>

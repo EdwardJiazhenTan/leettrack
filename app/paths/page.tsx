@@ -1,331 +1,279 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Inter } from 'next/font/google';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 interface Path {
   id: string;
   title: string;
   description: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  question_ids: string[];
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-  is_public: boolean;
+  difficulty: string;
   estimated_hours: number;
-  tags: string[];
+  is_public: boolean;
+  total_questions?: number;
+}
+
+interface EnrolledPath extends Path {
+  enrollment_id: string;
+  completion_percentage: number;
+  completed_questions: number;
+  enrolled_at: string;
 }
 
 export default function PathsPage() {
-  const [paths, setPaths] = useState<Path[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
-  const [newPath, setNewPath] = useState({
-    title: '',
-    description: '',
-    difficulty: 'Beginner' as 'Beginner' | 'Intermediate' | 'Advanced',
-    tags: '',
-    estimated_hours: 5,
-    is_public: false,
-  });
+  const router = useRouter();
+  const [availablePaths, setAvailablePaths] = useState<Path[]>([]);
+  const [enrolledPaths, setEnrolledPaths] = useState<EnrolledPath[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>("");
 
   useEffect(() => {
+    fetchUserInfo();
     fetchPaths();
   }, []);
 
-  const fetchPaths = async () => {
-    setLoading(true);
-    setError(null);
-
+  const fetchUserInfo = async () => {
     try {
-      const response = await fetch('/api/paths?is_public=true');
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch("/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsername(data.user.leetcode_username || data.user.username);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+    }
+  };
+
+  const fetchPaths = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/auth/login");
+        return;
       }
 
-      const result = await response.json();
-      setPaths(result.paths || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const enrolledRes = await fetch("/api/paths/enrolled", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const enrolledData = await enrolledRes.json();
+
+      if (enrolledData.success) {
+        setEnrolledPaths(enrolledData.paths);
+      }
+
+      const allRes = await fetch("/api/paths", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allData = await allRes.json();
+
+      if (allData.success) {
+        const enrolledIds = new Set(
+          enrolledData.paths?.map((p: EnrolledPath) => p.path_id) || [],
+        );
+        const available = allData.paths.filter(
+          (p: Path) => !enrolledIds.has(p.id),
+        );
+        setAvailablePaths(available);
+      }
+    } catch (error) {
+      console.error("Error fetching paths:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const createPath = async () => {
+  const handleEnroll = async (pathId: string) => {
+    setEnrolling(pathId);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Please log in to create a path');
-        return;
-      }
-
-      const response = await fetch('/api/paths', {
-        method: 'POST',
+      const response = await fetch("/api/paths/enroll", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({
-          ...newPath,
-          tags: newPath.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        }),
+        body: JSON.stringify({ path_id: pathId }),
       });
 
-      if (response.ok) {
-        alert('Path created successfully!');
-        setShowCreateModal(false);
-        setNewPath({
-          title: '',
-          description: '',
-          difficulty: 'Beginner',
-          tags: '',
-          estimated_hours: 5,
-          is_public: false,
-        });
-        fetchPaths();
+      const data = await response.json();
+      if (data.success) {
+        await fetchPaths();
       } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to create path');
+        alert(data.message || "Failed to enroll in path");
       }
-    } catch (err) {
-      alert('Failed to create path');
+    } catch (error) {
+      console.error("Error enrolling in path:", error);
+      alert("Failed to enroll in path");
+    } finally {
+      setEnrolling(null);
     }
   };
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Beginner':
-        return 'text-green-600 bg-green-50';
-      case 'Intermediate':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'Advanced':
-        return 'text-red-600 bg-red-50';
+    switch (difficulty?.toLowerCase()) {
+      case "beginner":
+        return "text-green-700 bg-green-50 border-green-200";
+      case "intermediate":
+        return "text-yellow-700 bg-yellow-50 border-yellow-200";
+      case "advanced":
+        return "text-red-700 bg-red-50 border-red-200";
       default:
-        return 'text-gray-600 bg-gray-50';
+        return "text-gray-700 bg-gray-50 border-gray-200";
     }
   };
 
   if (loading) {
     return (
-      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
-        <div className="animate-pulse text-gray-600">Loading paths...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
-        <div className="text-red-600 bg-white p-6 rounded-lg shadow-sm border">
-          Error: {error}
-        </div>
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
+        <div className="animate-pulse text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-light text-gray-900">
+            <Link href="/home" className="text-2xl font-light text-gray-900">
               LeetTrack
             </Link>
-            <div className="flex gap-4">
+            <div className="flex gap-6">
               <Link
-                href="/questions"
+                href="/home"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Questions
+                Today
+              </Link>
+              <Link href="/paths" className="text-gray-900 font-medium">
+                Paths
               </Link>
               <Link
-                href="/dashboard"
+                href="/stats"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Dashboard
+                Stats
               </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-light text-gray-900 mb-2">Learning Paths</h1>
-            <p className="text-gray-600">
-              Structured learning paths to guide your coding journey
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Create Path
-          </button>
-        </div>
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <h1 className="text-4xl font-light text-gray-900 mb-12">
+          Learning Paths
+        </h1>
 
-        {/* Paths List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paths.map((path) => (
-            <div key={path.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-medium text-gray-900">{path.title}</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(path.difficulty)}`}>
-                  {path.difficulty}
-                </span>
-              </div>
-
-              <p className="text-gray-600 mb-4 line-clamp-3">{path.description}</p>
-
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>{path.question_ids.length} questions</span>
-                <span>{path.estimated_hours} hours</span>
-              </div>
-
-              {path.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {path.tags.slice(0, 3).map((tag) => (
+        {enrolledPaths.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-light text-gray-900 mb-6">My Paths</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {enrolledPaths.map((path) => (
+                <div
+                  key={path.enrollment_id}
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-normal text-gray-900">
+                      {path.title}
+                    </h3>
                     <span
-                      key={tag}
-                      className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                      className={`px-3 py-1 rounded border text-xs font-medium ${getDifficultyColor(path.difficulty)}`}
                     >
-                      {tag}
+                      {path.difficulty}
                     </span>
-                  ))}
-                  {path.tags.length > 3 && (
-                    <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
-                      +{path.tags.length - 3} more
+                  </div>
+                  <p className="text-gray-600 mb-6">{path.description}</p>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Progress</span>
+                      <span className="font-medium">
+                        {path.completion_percentage}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div
+                        className="bg-black h-2 rounded-full transition-all"
+                        style={{ width: `${path.completion_percentage}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>
+                      {path.completed_questions}/{path.total_questions}{" "}
+                      questions
                     </span>
-                  )}
+                    <span>{path.estimated_hours}h estimated</span>
+                  </div>
                 </div>
-              )}
-
-              <div className="flex gap-2">
-                <button className="flex-1 bg-black text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm">
-                  Start Path
-                </button>
-                <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                  View Details
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        {paths.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No learning paths available yet.</p>
-            <p className="text-gray-400 text-sm mt-2">Create the first path to get started!</p>
           </div>
         )}
-      </div>
 
-      {/* Create Path Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Create Learning Path</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={newPath.title}
-                  onChange={(e) => setNewPath({...newPath, title: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                  placeholder="Path title"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newPath.description}
-                  onChange={(e) => setNewPath({...newPath, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                  rows={3}
-                  placeholder="Path description"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-                <select
-                  value={newPath.difficulty}
-                  onChange={(e) => setNewPath({...newPath, difficulty: e.target.value as any})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+        <div>
+          <h2 className="text-2xl font-light text-gray-900 mb-6">
+            Available Paths
+          </h2>
+          {availablePaths.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+              <p className="text-gray-600">
+                No more paths available to enroll in
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {availablePaths.map((path) => (
+                <div
+                  key={path.id}
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
                 >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-normal text-gray-900">
+                      {path.title}
+                    </h3>
+                    <span
+                      className={`px-3 py-1 rounded border text-xs font-medium ${getDifficultyColor(path.difficulty)}`}
+                    >
+                      {path.difficulty}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mb-6">{path.description}</p>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
-                <input
-                  type="text"
-                  value={newPath.tags}
-                  onChange={(e) => setNewPath({...newPath, tags: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                  placeholder="e.g., Arrays, Algorithms, Data Structures"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Hours</label>
-                <input
-                  type="number"
-                  value={newPath.estimated_hours}
-                  onChange={(e) => setNewPath({...newPath, estimated_hours: parseInt(e.target.value) || 1})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                  min="1"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_public"
-                  checked={newPath.is_public}
-                  onChange={(e) => setNewPath({...newPath, is_public: e.target.checked})}
-                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-                />
-                <label htmlFor="is_public" className="ml-2 block text-sm text-gray-700">
-                  Make this path public
-                </label>
-              </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      {path.estimated_hours}h estimated
+                    </span>
+                    <button
+                      onClick={() => handleEnroll(path.id)}
+                      disabled={enrolling === path.id}
+                      className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {enrolling === path.id ? "Enrolling..." : "Enroll"}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={createPath}
-                disabled={!newPath.title || !newPath.description}
-                className="flex-1 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Create Path
-              </button>
-            </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

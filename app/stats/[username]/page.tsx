@@ -1,9 +1,10 @@
-'use client'
-import { useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Inter } from 'next/font/google';
+"use client";
+import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 interface LeetCodeUser {
   username: string;
@@ -17,7 +18,7 @@ interface LeetCodeUser {
       count: number;
       submissions: number;
     }>;
-  }
+  };
 }
 
 interface QuestionCount {
@@ -57,42 +58,93 @@ export default function UserStats() {
     fetchLeetCodeStats();
   }, [username]);
 
-  if (loading) return (
-    <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
-      <div className="animate-pulse text-gray-600">Loading...</div>
-    </div>
-  );
-
-  if (error) return (
-    <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
-      <div className="text-red-600 bg-white p-6 rounded-lg shadow-sm border">
-        Error: {error}
+  if (loading)
+    return (
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
+        <div className="animate-pulse text-gray-600">Loading...</div>
       </div>
-    </div>
-  );
+    );
 
-  if (!data) return (
-    <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
-      <div className="text-gray-600 bg-white p-6 rounded-lg shadow-sm border">
-        No data found
+  if (error)
+    return (
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
+        <div className="text-red-600 bg-white p-6 rounded-lg shadow-sm border">
+          Error: {error}
+        </div>
       </div>
-    </div>
-  );
+    );
+
+  if (!data)
+    return (
+      <div
+        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
+      >
+        <div className="text-gray-600 bg-white p-6 rounded-lg shadow-sm border">
+          No data found
+        </div>
+      </div>
+    );
 
   // Calculate stats
-  const totalSolved = data.user.submitStats.acSubmissionNum.find(s => s.difficulty === 'All')?.count || 0;
-  const easySolved = data.user.submitStats.acSubmissionNum.find(s => s.difficulty === 'Easy')?.count || 0;
-  const mediumSolved = data.user.submitStats.acSubmissionNum.find(s => s.difficulty === 'Medium')?.count || 0;
-  const hardSolved = data.user.submitStats.acSubmissionNum.find(s => s.difficulty === 'Hard')?.count || 0;
+  const totalSolved =
+    data.user.submitStats.acSubmissionNum.find((s) => s.difficulty === "All")
+      ?.count || 0;
+  const easySolved =
+    data.user.submitStats.acSubmissionNum.find((s) => s.difficulty === "Easy")
+      ?.count || 0;
+  const mediumSolved =
+    data.user.submitStats.acSubmissionNum.find((s) => s.difficulty === "Medium")
+      ?.count || 0;
+  const hardSolved =
+    data.user.submitStats.acSubmissionNum.find((s) => s.difficulty === "Hard")
+      ?.count || 0;
 
-  const easyTotal = data.allQuestionsCount.find(q => q.difficulty === 'Easy')?.count || 0;
-  const mediumTotal = data.allQuestionsCount.find(q => q.difficulty === 'Medium')?.count || 0;
-  const hardTotal = data.allQuestionsCount.find(q => q.difficulty === 'Hard')?.count || 0;
+  const easyTotal =
+    data.allQuestionsCount.find((q) => q.difficulty === "Easy")?.count || 0;
+  const mediumTotal =
+    data.allQuestionsCount.find((q) => q.difficulty === "Medium")?.count || 0;
+  const hardTotal =
+    data.allQuestionsCount.find((q) => q.difficulty === "Hard")?.count || 0;
   const totalQuestions = easyTotal + mediumTotal + hardTotal;
 
   return (
-    <div className={`${inter.className} min-h-screen bg-gray-50 py-8 px-4`}>
-      <div className="max-w-4xl mx-auto">
+    <div className={`${inter.className} min-h-screen bg-gray-50`}>
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/home" className="text-2xl font-light text-gray-900">
+              LeetTrack
+            </Link>
+            <div className="flex gap-6">
+              <Link
+                href="/home"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Today
+              </Link>
+              <Link
+                href="/paths"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Paths
+              </Link>
+              <Link
+                href={`/stats/${username}`}
+                className="text-gray-900 font-medium"
+              >
+                Stats
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border p-8 mb-6">
           <h1 className="text-3xl font-light text-gray-900 mb-2">
@@ -101,14 +153,18 @@ export default function UserStats() {
           <div className="flex items-center gap-6 text-gray-600">
             <span>Real Name: {data.user.profile.realName}</span>
             <span>•</span>
-            <span>Global Ranking: #{data.user.profile.ranking.toLocaleString()}</span>
+            <span>
+              Global Ranking: #{data.user.profile.ranking.toLocaleString()}
+            </span>
           </div>
         </div>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-            <div className="text-2xl font-light text-gray-900 mb-1">{totalSolved}</div>
+            <div className="text-2xl font-light text-gray-900 mb-1">
+              {totalSolved}
+            </div>
             <div className="text-sm text-gray-500">Problems Solved</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
@@ -124,14 +180,18 @@ export default function UserStats() {
             <div className="text-sm text-gray-500">Global Rank</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
-            <div className="text-2xl font-light text-gray-900 mb-1">{totalQuestions}</div>
+            <div className="text-2xl font-light text-gray-900 mb-1">
+              {totalQuestions}
+            </div>
             <div className="text-sm text-gray-500">Total Problems</div>
           </div>
         </div>
 
         {/* Difficulty Breakdown */}
         <div className="bg-white rounded-lg shadow-sm border p-8">
-          <h2 className="text-xl font-light text-gray-900 mb-6">Difficulty Breakdown</h2>
+          <h2 className="text-xl font-light text-gray-900 mb-6">
+            Difficulty Breakdown
+          </h2>
 
           <div className="space-y-6">
             {/* Easy */}
@@ -141,7 +201,9 @@ export default function UserStats() {
                 <span className="text-gray-700 font-medium">Easy</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-gray-600">{easySolved} / {easyTotal}</span>
+                <span className="text-gray-600">
+                  {easySolved} / {easyTotal}
+                </span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full"
@@ -161,7 +223,9 @@ export default function UserStats() {
                 <span className="text-gray-700 font-medium">Medium</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-gray-600">{mediumSolved} / {mediumTotal}</span>
+                <span className="text-gray-600">
+                  {mediumSolved} / {mediumTotal}
+                </span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-yellow-500 h-2 rounded-full"
@@ -181,7 +245,9 @@ export default function UserStats() {
                 <span className="text-gray-700 font-medium">Hard</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-gray-600">{hardSolved} / {hardTotal}</span>
+                <span className="text-gray-600">
+                  {hardSolved} / {hardTotal}
+                </span>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-red-500 h-2 rounded-full"
@@ -198,13 +264,24 @@ export default function UserStats() {
 
         {/* Submission Stats */}
         <div className="bg-white rounded-lg shadow-sm border p-8 mt-6">
-          <h2 className="text-xl font-light text-gray-900 mb-6">Submission Statistics</h2>
+          <h2 className="text-xl font-light text-gray-900 mb-6">
+            Submission Statistics
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {data.user.submitStats.acSubmissionNum.map((stat) => (
-              <div key={stat.difficulty} className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-lg font-light text-gray-900">{stat.count}</div>
-                <div className="text-sm text-gray-500 mb-1">{stat.difficulty} Solved</div>
-                <div className="text-xs text-gray-400">{stat.submissions} submissions</div>
+              <div
+                key={stat.difficulty}
+                className="text-center p-4 bg-gray-50 rounded-lg"
+              >
+                <div className="text-lg font-light text-gray-900">
+                  {stat.count}
+                </div>
+                <div className="text-sm text-gray-500 mb-1">
+                  {stat.difficulty} Solved
+                </div>
+                <div className="text-xs text-gray-400">
+                  {stat.submissions} submissions
+                </div>
               </div>
             ))}
           </div>
@@ -212,7 +289,4 @@ export default function UserStats() {
       </div>
     </div>
   );
-
 }
-
-
