@@ -30,6 +30,7 @@ export default function HomePage() {
   const [breakdown, setBreakdown] = useState({ path: 0, review: 0, daily: 0 });
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("");
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     fetchUserInfo();
@@ -64,6 +65,15 @@ export default function HomePage() {
         return;
       }
 
+      // First, sync today's daily challenge from LeetCode
+      await fetch("/api/daily/sync", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).catch((err) => console.warn("Failed to sync daily challenge:", err));
+
+      // Then fetch all today's questions
       const response = await fetch("/api/daily/today", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -175,6 +185,32 @@ export default function HomePage() {
     }
   };
 
+  const handleLoadMorePath = async () => {
+    setLoadingMore(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/daily/more-path", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.question) {
+        setQuestions([...questions, data.question]);
+        setBreakdown({ ...breakdown, path: breakdown.path + 1 });
+      } else {
+        alert(data.message || "No more path questions available");
+      }
+    } catch (error) {
+      console.error("Error loading more path questions:", error);
+      alert("Failed to load more path questions");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   if (loading) {
     return (
       <div
@@ -210,6 +246,12 @@ export default function HomePage() {
               >
                 Stats
               </Link>
+              <Link
+                href="/settings"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Settings
+              </Link>
             </div>
           </div>
         </div>
@@ -221,12 +263,13 @@ export default function HomePage() {
             Today's Questions
           </h1>
           <p className="text-gray-500">
-            {new Date(date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            {date &&
+              new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
           </p>
         </div>
 
@@ -331,6 +374,19 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Load More Path Questions Button */}
+        {questions.length > 0 && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleLoadMorePath}
+              disabled={loadingMore}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+            >
+              {loadingMore ? "Loading..." : "Load More Path Questions"}
+            </button>
           </div>
         )}
       </div>
