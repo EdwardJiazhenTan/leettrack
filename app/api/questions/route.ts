@@ -5,7 +5,7 @@ import {
   searchQuestions,
   checkSlugExists,
   getQuestionStats,
-} from "../../../lib/questions-db";
+} from "../../../lib/questions";
 import type {
   CreateQuestionRequest,
   QuestionSearchParams,

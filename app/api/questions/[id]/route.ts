@@ -5,7 +5,7 @@ import {
   updateQuestion,
   deleteQuestion,
   checkSlugExists,
-} from "../../../../lib/questions-db";
+} from "../../../../lib/questions";
 import type {
   UpdateQuestionRequest,
   ApiError,
