@@ -24,6 +24,20 @@ interface EnrolledPath extends Path {
   enrolled_at: string;
 }
 
+interface ReviewQuestion {
+  id: string;
+  leetcode_id: string | null;
+  title: string;
+  slug: string;
+  difficulty: string;
+  url: string | null;
+  tags: string[];
+  wants_review: boolean;
+  next_review_date: string | null;
+  review_count: number;
+  last_attempted_at: string | null;
+}
+
 export default function PathsPage() {
   const router = useRouter();
   const [availablePaths, setAvailablePaths] = useState<Path[]>([]);
@@ -31,6 +45,11 @@ export default function PathsPage() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState<string | null>(null);
   const [username, setUsername] = useState<string>("");
+  const [expandedPathId, setExpandedPathId] = useState<string | null>(null);
+  const [reviewQuestions, setReviewQuestions] = useState<
+    Record<string, ReviewQuestion[]>
+  >({});
+  const [loadingReviews, setLoadingReviews] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserInfo();
@@ -121,13 +140,51 @@ export default function PathsPage() {
     }
   };
 
+  const fetchReviewQuestions = async (pathId: string) => {
+    if (reviewQuestions[pathId]) {
+      // Already loaded
+      return;
+    }
+
+    setLoadingReviews(pathId);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/paths/reviews?path_id=${pathId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setReviewQuestions((prev) => ({
+          ...prev,
+          [pathId]: data.questions,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching review questions:", error);
+    } finally {
+      setLoadingReviews(null);
+    }
+  };
+
+  const togglePathExpansion = async (pathId: string) => {
+    if (expandedPathId === pathId) {
+      setExpandedPathId(null);
+    } else {
+      setExpandedPathId(pathId);
+      await fetchReviewQuestions(pathId);
+    }
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
       case "beginner":
+      case "easy":
         return "text-green-700 bg-green-50 border-green-200";
       case "intermediate":
+      case "medium":
         return "text-yellow-700 bg-yellow-50 border-yellow-200";
       case "advanced":
+      case "hard":
         return "text-red-700 bg-red-50 border-red-200";
       default:
         return "text-gray-700 bg-gray-50 border-gray-200";
@@ -191,42 +248,114 @@ export default function PathsPage() {
               {enrolledPaths.map((path) => (
                 <div
                   key={path.enrollment_id}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-normal text-gray-900">
-                      {path.title}
-                    </h3>
-                    <span
-                      className={`px-3 py-1 rounded border text-xs font-medium ${getDifficultyColor(path.difficulty)}`}
-                    >
-                      {path.difficulty}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mb-6">{path.description}</p>
-
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
-                      <span>Progress</span>
-                      <span className="font-medium">
-                        {path.completion_percentage}%
+                  <div className="p-6 hover:border-gray-300 transition-colors">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-xl font-normal text-gray-900">
+                        {path.title}
+                      </h3>
+                      <span
+                        className={`px-3 py-1 rounded border text-xs font-medium ${getDifficultyColor(path.difficulty)}`}
+                      >
+                        {path.difficulty}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div
-                        className="bg-black h-2 rounded-full transition-all"
-                        style={{ width: `${path.completion_percentage}%` }}
-                      />
+                    <p className="text-gray-600 mb-6">{path.description}</p>
+
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Progress</span>
+                        <span className="font-medium">
+                          {path.completion_percentage}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div
+                          className="bg-black h-2 rounded-full transition-all"
+                          style={{ width: `${path.completion_percentage}%` }}
+                        />
+                      </div>
                     </div>
+
+                    <div className="flex justify-between text-sm text-gray-500 mb-4">
+                      <span>
+                        {path.completed_questions}/{path.total_questions}{" "}
+                        questions
+                      </span>
+                      <span>{path.estimated_hours}h estimated</span>
+                    </div>
+                    <button
+                      onClick={() => togglePathExpansion(path.path_id)}
+                      className="w-full text-sm text-gray-600 hover:text-gray-900 py-2 border-t border-gray-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                      {loadingReviews === path.path_id ? (
+                        "Loading reviews..."
+                      ) : (
+                        <>
+                          {expandedPathId === path.path_id ? "Hide" : "Show"}{" "}
+                          Review Questions
+                          {reviewQuestions[path.path_id] &&
+                            ` (${reviewQuestions[path.path_id].length})`}
+                        </>
+                      )}
+                    </button>
                   </div>
 
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>
-                      {path.completed_questions}/{path.total_questions}{" "}
-                      questions
-                    </span>
-                    <span>{path.estimated_hours}h estimated</span>
-                  </div>
+                  {expandedPathId === path.path_id &&
+                    reviewQuestions[path.path_id] && (
+                      <div className="border-t border-gray-200 bg-gray-50 p-4">
+                        {reviewQuestions[path.path_id].length === 0 ? (
+                          <p className="text-sm text-gray-500 text-center py-4">
+                            No questions to review
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {reviewQuestions[path.path_id].map((q) => (
+                              <div
+                                key={q.id}
+                                className="bg-white border border-gray-200 rounded p-3 text-sm"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <a
+                                      href={
+                                        q.url ||
+                                        `https://leetcode.com/problems/${q.slug}`
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-gray-900 hover:text-black font-medium"
+                                    >
+                                      {q.leetcode_id && `${q.leetcode_id}. `}
+                                      {q.title}
+                                    </a>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span
+                                        className={`text-xs font-medium ${getDifficultyColor(q.difficulty).replace("bg-", "text-").replace("-50", "-600")}`}
+                                      >
+                                        {q.difficulty}
+                                      </span>
+                                      {q.next_review_date && (
+                                        <span className="text-xs text-gray-500">
+                                          Review:{" "}
+                                          {new Date(
+                                            q.next_review_date,
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-gray-400">
+                                        Reviewed {q.review_count}x
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
