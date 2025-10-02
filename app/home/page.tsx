@@ -37,6 +37,20 @@ export default function HomePage() {
     fetchTodaysQuestions();
   }, []);
 
+  // Recalculate breakdown whenever questions change
+  useEffect(() => {
+    const newBreakdown = questions.reduce(
+      (acc, q) => {
+        if (q.source_type === "path") acc.path++;
+        else if (q.source_type === "review") acc.review++;
+        else if (q.source_type === "daily") acc.daily++;
+        return acc;
+      },
+      { path: 0, review: 0, daily: 0 },
+    );
+    setBreakdown(newBreakdown);
+  }, [questions]);
+
   const fetchUserInfo = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -199,7 +213,6 @@ export default function HomePage() {
 
       if (data.success && data.question) {
         setQuestions([...questions, data.question]);
-        setBreakdown({ ...breakdown, path: breakdown.path + 1 });
       } else {
         alert(data.message || "No more path questions available");
       }
