@@ -52,19 +52,20 @@ echo "✅ Database '$DB_NAME' and user '$DB_USER' created"
 
 # Run schema setup
 echo "📋 Setting up database schema..."
-psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/schema.sql"
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/../schema/complete-schema.sql"
 
 echo "✅ Database schema created"
 
 # Load all 150 questions
 echo "📚 Loading all 150 LeetCode questions..."
-psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/leetcode_150_complete.sql"
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/../seed/insert-all-150-questions.sql"
 
 echo "✅ All 150 questions loaded"
 
 # Create learning paths
 echo "🛤️  Creating learning paths..."
-psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/create_paths.sql"
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/../seed/create-top-interview-150-path.sql"
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$(dirname "$0")/../seed/create-graph-theory-path.sql"
 
 echo "✅ Learning paths created"
 

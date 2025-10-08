@@ -401,7 +401,7 @@ export async function recordQuestionSolved(user_id: string, difficulty: 'easy' |
     // Update difficulty-specific counter
     const difficultyKey = `${difficulty}_solved` as keyof UserStats;
     const currentCount = currentStats[difficultyKey] as number;
-    updates[difficultyKey] = currentCount + 1;
+    (updates as any)[difficultyKey] = currentCount + 1;
 
     return await updateUserStats(user_id, updates);
   } catch (error) {

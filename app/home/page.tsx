@@ -273,7 +273,7 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-light text-gray-900 mb-2">
-            Today's Questions
+            Today&apos;s Questions
           </h1>
           <p className="text-gray-500">
             {date &&

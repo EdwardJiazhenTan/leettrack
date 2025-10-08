@@ -17,14 +17,15 @@ interface ProgressUpdateRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const user_id = getUserFromRequest(request);
-    if (!user_id) {
+    const userAuth = getUserFromRequest(request);
+    if (!userAuth) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
     const body: ProgressUpdateRequest = await request.json();
 
     if (body.action === 'question_solved' && body.difficulty) {

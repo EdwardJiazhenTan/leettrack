@@ -1,13 +1,31 @@
-# LeetTrack Database Setup
+# LeetTrack Database
 
 This directory contains the PostgreSQL database schema and setup scripts for LeetTrack.
 
+## Directory Structure
+
+```
+database/
+├── schema/              # Database schema definitions
+│   └── complete-schema.sql
+├── seed/                # Seed data for production
+│   ├── insert-all-150-questions.sql
+│   ├── create-top-interview-150-path.sql
+│   └── create-graph-theory-path.sql
+├── migrations/          # Database migrations
+│   └── add_user_settings.sql
+├── setup/               # Setup scripts
+│   └── setup_complete.sh
+└── utils/               # Utility scripts
+    └── generate_questions.py
+```
+
 ## Prerequisites
 
-- PostgreSQL 12+ installed locally
+- PostgreSQL 12+ installed locally (or Neon/cloud PostgreSQL)
 - Node.js and npm (for running the application)
 
-## Quick Setup
+## Quick Setup (Local Development)
 
 1. **Install PostgreSQL** (if not already installed):
    ```bash
@@ -26,20 +44,18 @@ This directory contains the PostgreSQL database schema and setup scripts for Lee
 
 2. **Run the complete setup script**:
    ```bash
-   cd database
+   cd database/setup
    ./setup_complete.sh
    ```
    
    This will:
    - Create the database and user
    - Set up all tables and relationships
-   - Load all 150 LeetCode questions
-   - Create 22+ structured learning paths
-   - Set up proper tags and categories
+   - Load seed data with questions and learning paths
 
 3. **Configure environment variables**:
    ```bash
-   cd ..  # Back to project root
+   cd ../..  # Back to project root
    cp .env.example .env.local
    ```
    
@@ -50,30 +66,27 @@ This directory contains the PostgreSQL database schema and setup scripts for Lee
    npm install
    ```
 
-## Manual Setup
+## Production Setup (Neon/Cloud PostgreSQL)
 
-If you prefer to set up manually:
+1. **Create database schema**:
+   ```bash
+   psql <your-neon-connection-string> -f database/schema/complete-schema.sql
+   ```
 
-1. **Create database and user**:
-   ```sql
-   -- Connect as postgres superuser
-   psql -U postgres
+2. **Load seed data** (optional but recommended):
+   ```bash
+   # Load all 150 LeetCode questions
+   psql <your-neon-connection-string> -f database/seed/insert-all-150-questions.sql
    
-   -- Create user and database
-   CREATE USER leettrack_user WITH PASSWORD 'leettrack_password';
-   CREATE DATABASE leettrack OWNER leettrack_user;
-   GRANT ALL PRIVILEGES ON DATABASE leettrack TO leettrack_user;
-   ALTER USER leettrack_user CREATEDB;
+   # Create learning paths
+   psql <your-neon-connection-string> -f database/seed/create-top-interview-150-path.sql
+   psql <your-neon-connection-string> -f database/seed/create-graph-theory-path.sql
    ```
 
-2. **Run schema**:
+3. **Update environment variables**:
    ```bash
-   psql -U leettrack_user -d leettrack -f schema.sql
-   ```
-
-3. **Load sample data** (optional):
-   ```bash
-   psql -U leettrack_user -d leettrack -f sample_data.sql
+   # Add to .env.local or production environment
+   DATABASE_URL=<your-neon-connection-string>
    ```
 
 ## Database Schema
@@ -83,15 +96,17 @@ If you prefer to set up manually:
 - **`users`** - User accounts and authentication
 - **`questions`** - LeetCode problems and custom questions
 - **`question_tags`** - Tags for questions (many-to-many)
-- **`paths`** - Learning paths created by users
+- **`learning_paths`** - Learning paths created by users
 - **`path_tags`** - Tags for paths (many-to-many)
 - **`path_questions`** - Questions in paths with ordering
 
 ### Progress Tracking
 
-- **`user_path_progress`** - User enrollment and completion of paths
+- **`user_path_enrollments`** - User enrollment and completion of paths
 - **`user_question_progress`** - Individual question progress within paths
-- **`user_stats`** - Aggregated statistics for performance
+- **`daily_study_plans`** - Daily recommendations for users
+- **`daily_recommendations`** - Question recommendations
+- **`user_settings`** - User preferences
 
 ### Key Features
 
@@ -99,42 +114,29 @@ If you prefer to set up manually:
 - **Automatic timestamps** with triggers
 - **Foreign key constraints** for data integrity
 - **Indexes** for query performance
-- **Triggers** for automatic statistics updates
 - **Check constraints** for data validation
 
-## Complete Question Dataset
+## Seed Data
 
-The database includes:
+### Available Learning Paths
 
-### 📚 **150 LeetCode Questions** organized in 22 categories:
-- **Array / String** (24 questions) - Fundamental array and string operations
-- **Two Pointers** (5 questions) - Efficient two-pointer technique
-- **Sliding Window** (4 questions) - Window-based substring/subarray problems
-- **Matrix** (5 questions) - 2D array manipulation and traversal
-- **Hashmap** (9 questions) - Hash table applications and patterns
-- **Intervals** (4 questions) - Interval merging and processing
-- **Stack** (5 questions) - Stack-based parsing and validation
-- **Linked List** (11 questions) - Comprehensive linked list operations
-- **Binary Tree General** (14 questions) - Tree construction and traversal
-- **Binary Tree BFS** (7 questions) - Level-order and BFS algorithms
-- **Graph General** (6 questions) - Graph traversal and cycle detection
-- **Graph BFS** (2 questions) - BFS applications in graphs
-- **Trie** (3 questions) - Prefix tree implementation and usage
-- **Backtracking** (7 questions) - Recursive exploration algorithms
-- **Divide & Conquer** (4 questions) - Divide and conquer strategies
-- **Kadane's Algorithm** (2 questions) - Maximum subarray problems
-- **Binary Search** (7 questions) - Search and optimization techniques
-- **Heap** (4 questions) - Priority queue applications
-- **Bit Manipulation** (6 questions) - Bitwise operations and tricks
-- **Math** (6 questions) - Mathematical problem solving
-- **1D Dynamic Programming** (5 questions) - Foundation DP patterns
-- **Multidimensional DP** (10 questions) - Advanced DP techniques
+1. **Top Interview 150** (37 questions shown in script, complete version has 150)
+   - Difficulty: Intermediate
+   - Estimated: 100 hours
+   - LeetCode's curated interview questions
 
-### 🛤️ **22+ Learning Paths** with:
-- Structured progression from beginner to advanced
-- Estimated completion times
-- Proper difficulty classification
-- Category-specific tags and organization
+2. **Graph Theory** (37 questions)
+   - Difficulty: Intermediate
+   - Estimated: 40 hours
+   - DFS, BFS, topological sort, shortest paths, Union-Find
+
+### Question Database
+
+The seed data includes 150+ LeetCode questions organized by topics:
+- Array/String, Two Pointers, Sliding Window
+- Graph Theory, Trees, Linked Lists
+- Dynamic Programming, Backtracking
+- And more...
 
 ## Connection Testing
 
@@ -153,20 +155,17 @@ npm run dev
 
 For future schema changes:
 
-1. Create new migration files: `001_initial.sql`, `002_add_feature.sql`, etc.
-2. Always include rollback scripts
-3. Test migrations on a copy of production data
-4. Document breaking changes
+1. Create new migration files in `migrations/` directory
+2. Use descriptive names: `YYYY-MM-DD_feature_name.sql`
+3. Always include rollback capability
+4. Test migrations on a copy of production data
+5. Document breaking changes
 
-## Production Deployment
+### Running Migrations
 
-For cloud deployment (AWS RDS, Google Cloud SQL, etc.):
-
-1. Use the schema.sql to set up production database
-2. Update DATABASE_URL in production environment
-3. Consider connection pooling for high traffic
-4. Set up database backups
-5. Monitor query performance with indexes
+```bash
+psql <connection-string> -f database/migrations/add_user_settings.sql
+```
 
 ## Troubleshooting
 
@@ -176,9 +175,33 @@ For cloud deployment (AWS RDS, Google Cloud SQL, etc.):
 - Check username/password in .env.local
 
 **Permission errors:**
-- Ensure leettrack_user has proper privileges
+- Ensure database user has proper privileges
 - Check database ownership
 
 **Performance issues:**
 - Monitor slow queries with `pg_stat_statements`
 - Check if indexes are being used with `EXPLAIN`
+- Review query plans for optimization
+
+## Development Tools
+
+### Generate Questions Script
+
+Use `utils/generate_questions.py` to generate question seed data from LeetCode study plans:
+
+```bash
+cd database/utils
+python generate_questions.py
+```
+
+## Version Control
+
+All SQL files in this directory are safe to commit to version control as they contain:
+- Schema definitions (public knowledge)
+- LeetCode question metadata (public data)
+- Learning path structures (application content)
+
+**Do NOT commit:**
+- Database dumps with user data
+- Production connection strings with credentials
+- `.env` files

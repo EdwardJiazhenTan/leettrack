@@ -11,8 +11,8 @@ import type {
   QuestionSearchParams,
   QuestionListResponse,
   QuestionStats,
-  ApiError,
 } from "../../../types/question";
+import type { ApiError } from "../../../types/user";
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,8 +79,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user_id = getUserFromRequest(request);
-    if (!user_id) {
+    const userAuth = getUserFromRequest(request);
+    if (!userAuth) {
       return NextResponse.json<ApiError>(
         {
           status: "error",
@@ -89,6 +89,8 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
+
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
 
     const body: CreateQuestionRequest = await request.json();
 

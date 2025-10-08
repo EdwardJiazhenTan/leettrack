@@ -6,17 +6,15 @@ import {
   deleteQuestion,
   checkSlugExists,
 } from "../../../../lib/questions";
-import type {
-  UpdateQuestionRequest,
-  ApiError,
-} from "../../../../types/question";
+import type { UpdateQuestionRequest } from "../../../../types/question";
+import type { ApiError } from "../../../../types/user";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json<ApiError>(
@@ -54,12 +52,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user_id = getUserFromRequest(request);
+    const userAuth = getUserFromRequest(request);
 
-    if (!user_id) {
+    if (!userAuth) {
       return NextResponse.json<ApiError>(
         {
           status: "error",
@@ -69,7 +67,9 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
+
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json<ApiError>(
@@ -184,12 +184,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user_id = getUserFromRequest(request);
+    const userAuth = getUserFromRequest(request);
 
-    if (!user_id) {
+    if (!userAuth) {
       return NextResponse.json<ApiError>(
         {
           status: "error",
@@ -199,7 +199,9 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
+
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json<ApiError>(

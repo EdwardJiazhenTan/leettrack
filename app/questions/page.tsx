@@ -238,7 +238,7 @@ export default function QuestionsPage() {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder="Search by title, description, or tags..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
               />
             </div>
             <div>
@@ -252,7 +252,7 @@ export default function QuestionsPage() {
                 id="difficulty"
                 value={difficultyFilter}
                 onChange={(e) => setDifficultyFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
               >
                 <option value="">All Difficulties</option>
                 <option value="Easy">Easy</option>
@@ -388,7 +388,7 @@ export default function QuestionsPage() {
             {userPaths.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">
-                  You haven't created any paths yet.
+                  You haven&apos;t created any paths yet.
                 </p>
                 <Link
                   href="/paths"

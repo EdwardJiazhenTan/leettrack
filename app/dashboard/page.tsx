@@ -211,7 +211,7 @@ export default function Dashboard() {
               Search User
             </h3>
             <p className="text-gray-600 mb-4">
-              Look up other users' LeetCode statistics
+              Look up other users&apos; LeetCode statistics
             </p>
             <Link
               href="/"

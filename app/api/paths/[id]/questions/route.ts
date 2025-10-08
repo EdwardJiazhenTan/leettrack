@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Check if path exists and user owns it
-    const path = findPathById(pathId);
+    const path = await findPathById(pathId);
     if (!path) {
       return NextResponse.json(
         {
@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Check if path exists and user owns it
-    const path = findPathById(pathId);
+    const path = await findPathById(pathId);
     if (!path) {
       return NextResponse.json(
         {

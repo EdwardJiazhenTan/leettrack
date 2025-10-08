@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Verify password
     if (!userWithPassword.password_hash) {
-      console.error("Password hash is missing for user:", userWithPassword.id);
+      console.error("Password hash is missing for user:", userWithPassword.user_id);
       return NextResponse.json<AuthResponse>(
         {
           success: false,
@@ -60,11 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session token
-    const token = createSession(userWithPassword.id, userWithPassword.email);
+    const token = createSession(userWithPassword.user_id, userWithPassword.email);
 
     // Return user data (without password)
     const user = {
-      user_id: userWithPassword.id,
+      user_id: userWithPassword.user_id,
       email: userWithPassword.email,
       username: userWithPassword.username,
       leetcode_username: userWithPassword.leetcode_username,

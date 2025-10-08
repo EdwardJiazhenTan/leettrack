@@ -143,8 +143,8 @@ export async function deleteQuestion(id: string): Promise<boolean> {
 }
 
 export async function searchQuestions(params: QuestionSearchParams): Promise<QuestionListResponse> {
-  let whereConditions: string[] = [];
-  let queryParams: any[] = [];
+  const whereConditions: string[] = [];
+  const queryParams: any[] = [];
   let paramCount = 0;
 
   // Build WHERE conditions
@@ -287,7 +287,7 @@ export async function getQuestionStats(): Promise<QuestionStats> {
 
 export async function checkSlugExists(slug: string, excludeId?: string): Promise<boolean> {
   let query_str = 'SELECT COUNT(*) as count FROM questions WHERE slug = $1';
-  let params: any[] = [slug];
+  const params: any[] = [slug];
 
   if (excludeId) {
     query_str += ' AND id != $2';

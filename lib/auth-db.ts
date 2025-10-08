@@ -11,7 +11,7 @@ const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || "12");
 
 // Types for internal use
 interface UserRecord {
-  id: string;
+  user_id: string;
   email: string;
   username: string;
   password_hash: string;
@@ -45,12 +45,12 @@ interface UserStats {
 
 // Database functions
 async function dbCreateUser(
-  userData: Omit<UserRecord, "id" | "created_at" | "updated_at" | "is_admin">,
+  userData: Omit<UserRecord, "user_id" | "created_at" | "updated_at" | "is_admin">,
 ): Promise<UserRecord> {
   const user = await queryOne<UserRecord>(
     `INSERT INTO users (email, username, password_hash, leetcode_username)
      VALUES ($1, $2, $3, $4)
-     RETURNING *`,
+     RETURNING id as user_id, email, username, password_hash, leetcode_username, is_admin, created_at, updated_at`,
     [
       userData.email,
       userData.username,
@@ -67,20 +67,20 @@ async function dbCreateUser(
 }
 
 async function dbFindUserByEmail(email: string): Promise<UserRecord | null> {
-  return await queryOne<UserRecord>("SELECT * FROM users WHERE email = $1", [
+  return await queryOne<UserRecord>("SELECT id as user_id, email, username, password_hash, leetcode_username, is_admin, created_at, updated_at FROM users WHERE email = $1", [
     email,
   ]);
 }
 
 async function dbFindUserById(user_id: string): Promise<UserRecord | null> {
-  return await queryOne<UserRecord>("SELECT * FROM users WHERE id = $1", [
+  return await queryOne<UserRecord>("SELECT id as user_id, email, username, password_hash, leetcode_username, is_admin, created_at, updated_at FROM users WHERE id = $1", [
     user_id,
   ]);
 }
 
 async function dbUpdateUser(
   user_id: string,
-  updates: Partial<Omit<UserRecord, "id" | "created_at" | "password_hash">>,
+  updates: Partial<Omit<UserRecord, "user_id" | "created_at" | "password_hash">>,
 ): Promise<UserRecord | null> {
   const user = await queryOne<UserRecord>(
     `UPDATE users
@@ -257,7 +257,7 @@ export async function createUser(userData: {
 
     // Return user without password
     return {
-      user_id: user.id,
+      user_id: user.user_id,
       email: user.email,
       username: user.username,
       leetcode_username: user.leetcode_username || undefined,
@@ -289,7 +289,7 @@ export async function findUserById(user_id: string): Promise<User | null> {
 
     // Return user without password
     return {
-      user_id: user.id,
+      user_id: user.user_id,
       email: user.email,
       username: user.username,
       leetcode_username: user.leetcode_username || undefined,
@@ -317,7 +317,7 @@ export async function updateUser(
 
     // Return user without password
     return {
-      user_id: user.id,
+      user_id: user.user_id,
       email: user.email,
       username: user.username,
       leetcode_username: user.leetcode_username || undefined,

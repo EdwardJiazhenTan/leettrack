@@ -148,7 +148,7 @@ export default function UserStats() {
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border p-8 mb-6">
           <h1 className="text-3xl font-light text-gray-900 mb-2">
-            {username}'s LeetCode Stats
+            {username}&apos;s LeetCode Stats
           </h1>
           <div className="flex items-center gap-6 text-gray-600">
             <span>Real Name: {data.user.profile.realName}</span>

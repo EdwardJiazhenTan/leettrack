@@ -100,7 +100,7 @@ export default function PathsPage() {
 
       if (allData.success) {
         const enrolledIds = new Set(
-          enrolledData.paths?.map((p: EnrolledPath) => p.path_id) || [],
+          enrolledData.paths?.map((p: EnrolledPath) => p.id) || [],
         );
         const available = allData.paths.filter(
           (p: Path) => !enrolledIds.has(p.id),
@@ -286,32 +286,32 @@ export default function PathsPage() {
                       <span>{path.estimated_hours}h estimated</span>
                     </div>
                     <button
-                      onClick={() => togglePathExpansion(path.path_id)}
+                      onClick={() => togglePathExpansion(path.id)}
                       className="w-full text-sm text-gray-600 hover:text-gray-900 py-2 border-t border-gray-100 transition-colors flex items-center justify-center gap-2"
                     >
-                      {loadingReviews === path.path_id ? (
+                      {loadingReviews === path.id ? (
                         "Loading reviews..."
                       ) : (
                         <>
-                          {expandedPathId === path.path_id ? "Hide" : "Show"}{" "}
+                          {expandedPathId === path.id ? "Hide" : "Show"}{" "}
                           Review Questions
-                          {reviewQuestions[path.path_id] &&
-                            ` (${reviewQuestions[path.path_id].length})`}
+                          {reviewQuestions[path.id] &&
+                            ` (${reviewQuestions[path.id].length})`}
                         </>
                       )}
                     </button>
                   </div>
 
-                  {expandedPathId === path.path_id &&
-                    reviewQuestions[path.path_id] && (
+                  {expandedPathId === path.id &&
+                    reviewQuestions[path.id] && (
                       <div className="border-t border-gray-200 bg-gray-50 p-4">
-                        {reviewQuestions[path.path_id].length === 0 ? (
+                        {reviewQuestions[path.id].length === 0 ? (
                           <p className="text-sm text-gray-500 text-center py-4">
                             No questions to review
                           </p>
                         ) : (
                           <div className="space-y-2">
-                            {reviewQuestions[path.path_id].map((q) => (
+                            {reviewQuestions[path.id].map((q) => (
                               <div
                                 key={q.id}
                                 className="bg-white border border-gray-200 rounded p-3 text-sm"

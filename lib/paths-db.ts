@@ -190,8 +190,8 @@ export async function searchPaths(params: {
   offset?: number;
 }): Promise<PathListResponse> {
   try {
-    let whereConditions: string[] = [];
-    let queryParams: any[] = [];
+    const whereConditions: string[] = [];
+    const queryParams: any[] = [];
     let paramCount = 0;
 
     // Build WHERE conditions

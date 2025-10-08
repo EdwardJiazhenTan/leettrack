@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getQuestionStats } from "../../../../lib/questions";
-import type { QuestionStats, ApiError } from "../../../../types/question";
+import type { QuestionStats } from "../../../../types/question";
+import type { ApiError } from "../../../../types/user";
 
 export async function GET(request: NextRequest) {
   try {
