@@ -254,6 +254,12 @@ export default function HomePage() {
                 Paths
               </Link>
               <Link
+                href="/test"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Test
+              </Link>
+              <Link
                 href="/stats"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
