@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
+    const today = new Date().toISOString().split('T')[0];
 
     // Get next path question (just 1 more)
     const pathQuestions = await query<{
@@ -35,9 +36,8 @@ export async function GET(request: NextRequest) {
         WHERE user_id = $1 AND status = 'completed'
       ),
       todays_shown AS (
-        SELECT question_id FROM user_question_progress
-        WHERE user_id = $1
-          AND DATE(updated_at) = CURRENT_DATE
+        SELECT question_id FROM daily_recommendations
+        WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new' AND path_id IS NOT NULL
       )
       SELECT DISTINCT
         q.id as question_id,
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         AND ts.question_id IS NULL
       ORDER BY pq.path_id, pq.order_index
       LIMIT 1
-    `, [user_id]);
+    `, [user_id, today]);
 
     if (pathQuestions.length === 0) {
       return NextResponse.json({
@@ -74,6 +74,14 @@ export async function GET(request: NextRequest) {
     const tags = await query<{ tag: string }>(
       `SELECT tag FROM question_tags WHERE question_id = $1`,
       [question.question_id]
+    );
+
+    // Save this question to daily_recommendations so it's tracked
+    await query(
+      `INSERT INTO daily_recommendations (user_id, date, question_id, path_id, recommendation_type, priority_score, is_completed)
+       VALUES ($1, $2, $3, $4, 'new', 1.0, false)
+       ON CONFLICT (user_id, date, question_id, recommendation_type) DO NOTHING`,
+      [user_id, today, question.question_id, question.path_id]
     );
 
     const formattedQuestion = {

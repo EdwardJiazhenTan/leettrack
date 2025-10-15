@@ -30,6 +30,15 @@ export async function GET(request: NextRequest) {
     const user_id = typeof userAuth === "string" ? userAuth : userAuth.user_id;
     const today = new Date().toISOString().split("T")[0];
 
+    // Check if user already has questions for today in daily_recommendations
+    const existingDailyPath = await query<{ question_id: string }>(
+      `SELECT DISTINCT question_id FROM daily_recommendations
+       WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new' AND path_id IS NOT NULL`,
+      [user_id, today]
+    );
+
+    const existingPathQuestionIds = existingDailyPath.map(q => q.question_id);
+
     // Round-robin selection: Get 1-2 questions from each enrolled path
     const pathQuestions = await query<{
       question_id: string;
@@ -51,6 +60,10 @@ export async function GET(request: NextRequest) {
         SELECT question_id, path_id FROM user_question_progress
         WHERE user_id = $1 AND status = 'completed'
       ),
+      todays_recommendations AS (
+        SELECT question_id FROM daily_recommendations
+        WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new' AND path_id IS NOT NULL
+      ),
       ranked_questions AS (
         SELECT
           q.id as question_id,
@@ -68,7 +81,8 @@ export async function GET(request: NextRequest) {
         JOIN path_questions pq ON pq.path_id = lp.id
         JOIN questions q ON pq.question_id = q.id
         LEFT JOIN completed_questions cq ON cq.question_id = q.id AND cq.path_id = pq.path_id
-        WHERE cq.question_id IS NULL
+        LEFT JOIN todays_recommendations tr ON tr.question_id = q.id
+        WHERE cq.question_id IS NULL AND tr.question_id IS NULL
       )
       SELECT
         question_id,
@@ -84,8 +98,53 @@ export async function GET(request: NextRequest) {
       WHERE row_num <= 2
       ORDER BY path_id, order_index
     `,
-      [user_id],
+      [user_id, today],
     );
+
+    // If we got new path questions, save them to daily_recommendations
+    if (pathQuestions.length > 0) {
+      for (const q of pathQuestions) {
+        await query(
+          `INSERT INTO daily_recommendations (user_id, date, question_id, path_id, recommendation_type, priority_score, is_completed)
+           VALUES ($1, $2, $3, $4, 'new', 1.0, false)
+           ON CONFLICT (user_id, date, question_id, recommendation_type) DO NOTHING`,
+          [user_id, today, q.question_id, q.path_id]
+        );
+      }
+    }
+
+    // If we already had path questions for today but they've been completed, fetch them
+    let displayPathQuestions = pathQuestions;
+    if (pathQuestions.length === 0 && existingPathQuestionIds.length > 0) {
+      displayPathQuestions = await query<{
+        question_id: string;
+        title: string;
+        slug: string;
+        difficulty: string;
+        url: string;
+        leetcode_id: string;
+        path_id: string;
+        path_title: string;
+        order_index: number;
+      }>(
+        `SELECT
+          q.id as question_id,
+          q.title,
+          q.slug,
+          q.difficulty,
+          q.url,
+          q.leetcode_id,
+          dr.path_id,
+          lp.title as path_title,
+          0 as order_index
+        FROM daily_recommendations dr
+        JOIN questions q ON dr.question_id = q.id
+        LEFT JOIN learning_paths lp ON dr.path_id = lp.id
+        WHERE dr.user_id = $1 AND dr.date = $2 AND dr.is_completed = false AND dr.path_id IS NOT NULL
+        ORDER BY dr.created_at`,
+        [user_id, today]
+      );
+    }
 
     const reviewQuestions = await query<{
       question_id: string;
@@ -174,7 +233,7 @@ export async function GET(request: NextRequest) {
     }
 
     const formattedQuestions: TodayQuestion[] = [
-      ...pathQuestions.map((q) => ({
+      ...displayPathQuestions.map((q) => ({
         id: q.question_id,
         title: q.title,
         slug: q.slug,
@@ -218,7 +277,7 @@ export async function GET(request: NextRequest) {
       questions: formattedQuestions,
       total: formattedQuestions.length,
       breakdown: {
-        path: pathQuestions.length,
+        path: displayPathQuestions.length,
         review: reviewQuestions.length,
         daily: dailyQuestions.length,
       },

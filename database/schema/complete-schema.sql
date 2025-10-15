@@ -161,6 +161,7 @@ CREATE TABLE user_question_progress (
   wants_review BOOLEAN DEFAULT FALSE,
   review_count INTEGER DEFAULT 0,
   next_review_date DATE,
+  first_attempted_at TIMESTAMP WITH TIME ZONE,
   last_attempted_at TIMESTAMP WITH TIME ZONE,
   completed_at TIMESTAMP WITH TIME ZONE,
   notes TEXT,

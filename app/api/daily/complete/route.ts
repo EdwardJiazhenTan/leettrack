@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
       );
 
       if (stats && stats.total_questions > 0) {
-        const percentage = (stats.completed_questions / stats.total_questions) * 100;
-        
+        const percentage = Math.round((stats.completed_questions / stats.total_questions) * 100);
+
         await query(
-          `UPDATE user_path_enrollments 
+          `UPDATE user_path_enrollments
            SET completion_percentage = $1
            WHERE user_id = $2 AND path_id = $3`,
           [percentage, user_id, path_id]
