@@ -14,6 +14,11 @@ const dbConfig: PoolConfig = {
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
   connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+
+  // SSL configuration for production databases (e.g., Vercel Postgres, Neon, etc.)
+  ssl: process.env.DATABASE_URL?.includes('sslmode=require') || process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : undefined,
 };
 
 // Create connection pool
@@ -36,13 +41,30 @@ export function getPool(): Pool {
 // Helper function to execute queries
 export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
   const pool = getPool();
-  const client = await pool.connect();
+  let client;
+
+  try {
+    client = await pool.connect();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    console.error('Connection details:', {
+      hasConnectionString: !!process.env.DATABASE_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+    throw error;
+  }
 
   try {
     const result = await client.query(text, params);
     return result.rows;
+  } catch (error) {
+    console.error('Database query error:', error);
+    console.error('Query details:', { text, params });
+    throw error;
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 }
 

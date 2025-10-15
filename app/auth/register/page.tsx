@@ -96,7 +96,7 @@ export default function RegisterPage() {
       if (data.success) {
         setSuccess(true);
         localStorage.setItem("token", data.token);
-        router.push("/dashboard");
+        router.push("/home");
       } else {
         setError(data.message || "Registration failed");
       }
@@ -142,7 +142,7 @@ export default function RegisterPage() {
             </h1>
             <p className="text-gray-600">
               Your account has been created successfully. Redirecting to
-              dashboard...
+              home...
             </p>
           </div>
         </div>

@@ -3,26 +3,36 @@ import { getUserFromRequest } from '@/lib/auth';
 import { query, queryOne } from '@/lib/database';
 
 export async function POST(request: NextRequest) {
-  const userAuth = getUserFromRequest(request);
-  if (!userAuth) {
-    return NextResponse.json(
-      { success: false, message: 'Authentication required' },
-      { status: 401 }
-    );
-  }
-
-  const user_id = typeof userAuth === 'string' ? userAuth : userAuth.user_id;
-  const body = await request.json();
-  const { question_id, path_id, source_type } = body;
-
-  if (!question_id) {
-    return NextResponse.json(
-      { success: false, message: 'question_id is required' },
-      { status: 400 }
-    );
-  }
-
   try {
+    const userAuth = getUserFromRequest(request);
+    if (!userAuth) {
+      return NextResponse.json(
+        { success: false, message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const user_id = userAuth.user_id;
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return NextResponse.json(
+        { success: false, message: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
+    const { question_id, path_id, source_type } = body;
+
+    if (!question_id) {
+      return NextResponse.json(
+        { success: false, message: 'question_id is required' },
+        { status: 400 }
+      );
+    }
     await query(
       `INSERT INTO user_question_progress (user_id, question_id, path_id, status, last_attempted_at, completed_at, first_attempted_at)
        VALUES ($1, $2, $3, 'completed', NOW(), NOW(), NOW())
@@ -84,6 +94,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error marking question as complete:', error);
+    console.error('Error details:', {
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack
+    });
     return NextResponse.json(
       { success: false, message: 'Failed to mark question as complete' },
       { status: 500 }
