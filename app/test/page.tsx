@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import Navbar from "@/components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,12 +18,58 @@ interface Question {
 }
 
 type TestState = "topic-selection" | "in-progress" | "completed";
-type Topic = "binary-search" | "dynamic-programming" | "graph";
 
-const TOPICS: { value: Topic; label: string }[] = [
-  { value: "binary-search", label: "Binary Search" },
+// Comprehensive list of LeetCode topics
+const ALL_TOPICS = [
+  { value: "array", label: "Array" },
+  { value: "string", label: "String" },
+  { value: "hash-table", label: "Hash Table" },
   { value: "dynamic-programming", label: "Dynamic Programming" },
+  { value: "math", label: "Math" },
+  { value: "sorting", label: "Sorting" },
+  { value: "greedy", label: "Greedy" },
+  { value: "depth-first-search", label: "Depth-First Search" },
+  { value: "binary-search", label: "Binary Search" },
+  { value: "breadth-first-search", label: "Breadth-First Search" },
+  { value: "tree", label: "Tree" },
+  { value: "matrix", label: "Matrix" },
+  { value: "two-pointers", label: "Two Pointers" },
+  { value: "bit-manipulation", label: "Bit Manipulation" },
+  { value: "stack", label: "Stack" },
+  { value: "heap-priority-queue", label: "Heap (Priority Queue)" },
   { value: "graph", label: "Graph" },
+  { value: "prefix-sum", label: "Prefix Sum" },
+  { value: "simulation", label: "Simulation" },
+  { value: "counting", label: "Counting" },
+  { value: "sliding-window", label: "Sliding Window" },
+  { value: "union-find", label: "Union Find" },
+  { value: "linked-list", label: "Linked List" },
+  { value: "ordered-set", label: "Ordered Set" },
+  { value: "monotonic-stack", label: "Monotonic Stack" },
+  { value: "enumeration", label: "Enumeration" },
+  { value: "recursion", label: "Recursion" },
+  { value: "trie", label: "Trie" },
+  { value: "divide-and-conquer", label: "Divide and Conquer" },
+  { value: "binary-tree", label: "Binary Tree" },
+  { value: "backtracking", label: "Backtracking" },
+  { value: "bitmask", label: "Bitmask" },
+  { value: "queue", label: "Queue" },
+  { value: "memoization", label: "Memoization" },
+  { value: "segment-tree", label: "Segment Tree" },
+  { value: "geometry", label: "Geometry" },
+  { value: "topological-sort", label: "Topological Sort" },
+  { value: "binary-search-tree", label: "Binary Search Tree" },
+  { value: "binary-indexed-tree", label: "Binary Indexed Tree" },
+  { value: "hash-function", label: "Hash Function" },
+  { value: "game-theory", label: "Game Theory" },
+  { value: "shortest-path", label: "Shortest Path" },
+  { value: "combinatorics", label: "Combinatorics" },
+  { value: "interactive", label: "Interactive" },
+  { value: "string-matching", label: "String Matching" },
+  { value: "rolling-hash", label: "Rolling Hash" },
+  { value: "number-theory", label: "Number Theory" },
+  { value: "randomized", label: "Randomized" },
+  { value: "monotonic-queue", label: "Monotonic Queue" },
 ];
 
 const DIFFICULTIES = ["Easy", "Easy", "Medium", "Medium", "Hard"] as const;
@@ -31,7 +78,7 @@ const TIME_LIMIT_MINUTES = 25;
 export default function TestPage() {
   const router = useRouter();
   const [testState, setTestState] = useState<TestState>("topic-selection");
-  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [scores, setScores] = useState<boolean[]>([]);
@@ -98,7 +145,12 @@ export default function TestPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const startTest = async (topic: Topic) => {
+  const startTest = async () => {
+    if (!selectedTopic) {
+      setError("Please select a topic first.");
+      return;
+    }
+
     if (!leetcodeUsername) {
       setError(
         "Please set your LeetCode username in settings before taking a test."
@@ -108,7 +160,6 @@ export default function TestPage() {
 
     setLoading(true);
     setError(null);
-    setSelectedTopic(topic);
 
     try {
       // Fetch 5 questions (Easy, Easy, Medium, Medium, Hard)
@@ -117,7 +168,7 @@ export default function TestPage() {
       for (let i = 0; i < 5; i++) {
         const difficulty = DIFFICULTIES[i];
         const response = await fetch(
-          `/api/test/random-question?topic=${topic}&difficulty=${difficulty}`
+          `/api/test/random-question?topic=${selectedTopic}&difficulty=${difficulty}`
         );
 
         const data = await response.json();
@@ -219,7 +270,7 @@ export default function TestPage() {
 
   const resetTest = () => {
     setTestState("topic-selection");
-    setSelectedTopic(null);
+    setSelectedTopic("");
     setQuestions([]);
     setScores([]);
     setCurrentQuestionIndex(0);
@@ -230,45 +281,7 @@ export default function TestPage() {
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/home" className="text-2xl font-light text-gray-900">
-              LeetTrack
-            </Link>
-            <div className="flex gap-6">
-              <Link
-                href="/home"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Today
-              </Link>
-              <Link
-                href="/paths"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Paths
-              </Link>
-              <Link href="/test" className="text-gray-900 font-medium">
-                Test
-              </Link>
-              <Link
-                href="/stats"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Stats
-              </Link>
-              <Link
-                href="/settings"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Settings
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Topic Selection */}
@@ -303,29 +316,54 @@ export default function TestPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {TOPICS.map((topic) => (
-                <button
-                  key={topic.value}
-                  onClick={() => startTest(topic.value)}
-                  disabled={loading || !leetcodeUsername}
-                  className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="bg-white border border-gray-200 rounded-lg p-8 mb-6">
+              <label
+                htmlFor="topic-select"
+                className="block text-lg font-medium text-gray-900 mb-3"
+              >
+                Select a Topic
+              </label>
+              <select
+                id="topic-select"
+                value={selectedTopic}
+                onChange={(e) => setSelectedTopic(e.target.value)}
+                disabled={loading}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">-- Choose a topic --</option>
+                {ALL_TOPICS.map((topic) => (
+                  <option key={topic.value} value={topic.value}>
                     {topic.label}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    5 questions • 25 min each
-                  </p>
+                  </option>
+                ))}
+              </select>
+
+              <div className="mt-6">
+                <button
+                  onClick={startTest}
+                  disabled={loading || !leetcodeUsername || !selectedTopic}
+                  className="w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-lg font-medium"
+                >
+                  {loading ? "Preparing your test..." : "Start Test"}
                 </button>
-              ))}
+              </div>
+
+              <div className="mt-4 text-sm text-gray-500 text-center">
+                {ALL_TOPICS.length} topics available
+              </div>
             </div>
 
-            {loading && (
-              <div className="mt-8 text-center">
-                <div className="animate-pulse text-gray-600">
-                  Preparing your test...
-                </div>
+            {selectedTopic && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-blue-800">
+                  <strong>
+                    Selected:{" "}
+                    {ALL_TOPICS.find((t) => t.value === selectedTopic)?.label}
+                  </strong>
+                </p>
+                <p className="text-sm text-blue-700 mt-1">
+                  You will receive 5 questions: 2 Easy, 2 Medium, and 1 Hard
+                </p>
               </div>
             )}
           </div>
@@ -338,7 +376,7 @@ export default function TestPage() {
               <div>
                 <h1 className="text-3xl font-light text-gray-900">
                   {selectedTopic &&
-                    TOPICS.find((t) => t.value === selectedTopic)?.label}
+                    ALL_TOPICS.find((t) => t.value === selectedTopic)?.label}
                 </h1>
                 <p className="text-gray-500">
                   Question {currentQuestionIndex + 1} of 5
@@ -469,7 +507,7 @@ export default function TestPage() {
               </h2>
               <p className="text-gray-600 mb-8">
                 {selectedTopic &&
-                  TOPICS.find((t) => t.value === selectedTopic)?.label}
+                  ALL_TOPICS.find((t) => t.value === selectedTopic)?.label}
               </p>
 
               <div className="grid grid-cols-5 gap-3 max-w-md mx-auto mb-8">

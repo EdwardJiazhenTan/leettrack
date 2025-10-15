@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
+import Navbar from '@/components/Navbar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -99,30 +100,7 @@ export default function SettingsPage() {
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/home" className="text-2xl font-light text-gray-900">
-              LeetTrack
-            </Link>
-            <div className="flex gap-6">
-              <Link href="/home" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Today
-              </Link>
-              <Link href="/paths" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Paths
-              </Link>
-              <Link href="/stats" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Stats
-              </Link>
-              <Link href="/settings" className="text-gray-900 font-medium">
-                Settings
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-2xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-light text-gray-900 mb-8">Settings</h1>
