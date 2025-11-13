@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/app/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -488,7 +488,7 @@ export default function TestPage() {
 
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 Solve the problem on LeetCode, then click "Check Submission"
+                💡 Solve the problem on LeetCode, then click &quot;Check Submission&quot;
                 to verify and move to the next question.
               </p>
             </div>

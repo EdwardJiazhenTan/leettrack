@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/app/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,19 +38,6 @@ export default function HomePage() {
     fetchTodaysQuestions();
   }, []);
 
-  // Recalculate breakdown whenever questions change
-  useEffect(() => {
-    const newBreakdown = questions.reduce(
-      (acc, q) => {
-        if (q.source_type === "path") acc.path++;
-        else if (q.source_type === "review") acc.review++;
-        else if (q.source_type === "daily") acc.daily++;
-        return acc;
-      },
-      { path: 0, review: 0, daily: 0 },
-    );
-    setBreakdown(newBreakdown);
-  }, [questions]);
 
   const fetchUserInfo = async () => {
     try {
@@ -89,12 +76,14 @@ export default function HomePage() {
       }).catch((err) => console.warn("Failed to sync daily challenge:", err));
 
       // Then fetch all today's questions
+      // TODO: if not loggedin, dot show this
       const response = await fetch("/api/daily/today", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      // TODO: even if not login, we still want to show the daily question and a sign to remind login
       if (response.status === 401) {
         localStorage.removeItem("token");
         router.push("/auth/login");
@@ -108,6 +97,7 @@ export default function HomePage() {
         setBreakdown(data.breakdown);
       }
     } catch (error) {
+      // TODO: create an error page to handle errors instead of a console error
       console.error("Error fetching today's questions:", error);
     } finally {
       setLoading(false);

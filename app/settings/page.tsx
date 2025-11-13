@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Inter } from 'next/font/google';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/app/Navbar';
 
 const inter = Inter({ subsets: ['latin'] });
 

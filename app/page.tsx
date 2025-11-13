@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Inter } from "next/font/google";
@@ -20,25 +19,15 @@ export default function LandingPage() {
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      {/* Navigation */}
+      {/* a public navbar*/}
       <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-light text-gray-900">LeetTrack</h1>
-            <div className="flex gap-4">
-              <Link
-                href="/auth/login"
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors flex items-center"
-              >
-                Login
-              </Link>
-              <Link
-                href="/auth/register"
-                className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Register
-              </Link>
-            </div>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold text-blue-600">LeetTrack</div>
+          <div className="flex gap-6 items-center">
+            <Link href="/today" className="text-gray-700 hover:text-gray-900">Today</Link>
+            <Link href="/paths" className="text-gray-700 hover:text-gray-900">Paths</Link>
+            <Link href="/auth/login" className="text-gray-700 hover:text-gray-900">Login</Link>
+            <Link href="/auth/register" className="text-gray-700 hover:text-gray-900">Register</Link>
           </div>
         </div>
       </nav>
@@ -53,25 +42,8 @@ export default function LandingPage() {
             Track and review your LeetCode questions all in one place.
           </p>
 
-          {/* Search Form */}
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter LeetCode username"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
-              >
-                View Stats
-              </button>
-            </div>
-          </form>
+          {/* login and signup Section */}
+
         </div>
       </div>
 
