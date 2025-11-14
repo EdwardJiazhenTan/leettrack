@@ -123,6 +123,12 @@ export default function HomePage() {
       const data = await response.json();
       if (data.success) {
         setQuestions(questions.filter((q) => q.id !== question.id));
+
+        // Update breakdown count based on source_type
+        setBreakdown((prev) => ({
+          ...prev,
+          [question.source_type]: Math.max(0, prev[question.source_type] - 1),
+        }));
       } else {
         alert(data.message || "Failed to mark question as complete");
       }
@@ -153,6 +159,12 @@ export default function HomePage() {
       const data = await response.json();
       if (data.success) {
         setQuestions(questions.filter((q) => q.id !== question.id));
+
+        // Update breakdown count based on source_type
+        setBreakdown((prev) => ({
+          ...prev,
+          [question.source_type]: Math.max(0, prev[question.source_type] - 1),
+        }));
       } else {
         alert(data.message || "Failed to schedule question for review");
       }
