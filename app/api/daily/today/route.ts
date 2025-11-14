@@ -41,6 +41,13 @@ export async function GET(request: NextRequest) {
 
     // If no recommendations exist for today, generate them (only happens once per day)
     if (!hasRecommendationsForToday) {
+      // Get user settings for path_questions_per_day
+      const userSettings = await query<{ path_questions_per_day: number }>(
+        `SELECT path_questions_per_day FROM user_settings WHERE user_id = $1`,
+        [user_id]
+      );
+      const questionsPerPath = userSettings[0]?.path_questions_per_day || 3;
+
       // Generate path questions
       const pathQuestions = await query<{
         question_id: string;
@@ -92,10 +99,10 @@ export async function GET(request: NextRequest) {
           path_title,
           order_index
         FROM ranked_questions
-        WHERE row_num <= 2
+        WHERE row_num <= $2
         ORDER BY path_id, order_index
       `,
-        [user_id],
+        [user_id, questionsPerPath],
       );
 
       // Save path questions to daily_recommendations

@@ -50,9 +50,9 @@ export async function POST(request: NextRequest) {
         total_questions: number;
         completed_questions: number;
       }>(
-        `SELECT 
+        `SELECT
           (SELECT COUNT(*) FROM path_questions WHERE path_id = $2) as total_questions,
-          (SELECT COUNT(*) FROM user_question_progress 
+          (SELECT COUNT(*) FROM user_question_progress
            WHERE user_id = $1 AND path_id = $2 AND status = 'completed') as completed_questions`,
         [user_id, path_id]
       );
@@ -67,6 +67,15 @@ export async function POST(request: NextRequest) {
           [percentage, user_id, path_id]
         );
       }
+
+      // Mark the daily recommendation as completed
+      const today = new Date().toISOString().split('T')[0];
+      await query(
+        `UPDATE daily_recommendations
+         SET is_completed = true, completed_at = NOW()
+         WHERE user_id = $1 AND question_id = $2 AND date = $3 AND is_completed = false`,
+        [user_id, question_id, today]
+      );
     }
 
     if (source_type === 'daily') {
