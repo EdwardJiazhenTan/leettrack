@@ -22,7 +22,7 @@ export default function Navbar() {
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href={isLoggedIn ? "/home" : "/"} className="text-2xl font-light text-gray-900">
+          <Link href={isLoggedIn ? "/today" : "/"} className="text-2xl font-light text-gray-900">
             LeetTrack
           </Link>
           <div className="flex gap-6 items-center">
@@ -30,9 +30,9 @@ export default function Navbar() {
               // Logged-in navigation
               <>
                 <Link
-                  href="/home"
+                  href="/today"
                   className={
-                    isActive("/home")
+                    isActive("/today")
                       ? "text-gray-900 font-medium"
                       : "text-gray-600 hover:text-gray-900 transition-colors"
                   }
@@ -84,7 +84,7 @@ export default function Navbar() {
               // Unlogged-in navigation
               <>
                 <Link
-                  href="/home"
+                  href="/today"
                   className="text-gray-600 hover:text-gray-900 transition-colors"
                 >
                   Today

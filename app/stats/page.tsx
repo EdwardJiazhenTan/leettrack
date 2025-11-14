@@ -63,27 +63,29 @@ export default function StatsRedirect() {
 
   if (error) {
     return (
-      <div
-        className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
-      >
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center max-w-md">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Link
-            href="/today"
-            className="inline-block px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Back to Home
-          </Link>
+      <div className={`${inter.className} min-h-screen bg-gray-50`}>
+        <Navbar />
+        <div className="flex items-center justify-center py-12">
+          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center max-w-md">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Link
+              href="/today"
+              className="inline-block px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Back to Home
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
-    >
-      <div className="animate-pulse text-gray-600">Loading...</div>
+    <div className={`${inter.className} min-h-screen bg-gray-50`}>
+      <Navbar />
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-pulse text-gray-600">Loading...</div>
+      </div>
     </div>
   );
 }

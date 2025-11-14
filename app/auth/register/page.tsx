@@ -97,7 +97,7 @@ export default function RegisterPage() {
       if (data.success) {
         setSuccess(true);
         localStorage.setItem("token", data.token);
-        router.push("/home");
+        router.push("/today");
       } else {
         setError(data.message || "Registration failed");
       }

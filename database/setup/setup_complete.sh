@@ -77,7 +77,7 @@ SELECT
     (SELECT COUNT(*) FROM questions WHERE difficulty = 'Easy') as easy_questions,
     (SELECT COUNT(*) FROM questions WHERE difficulty = 'Medium') as medium_questions,
     (SELECT COUNT(*) FROM questions WHERE difficulty = 'Hard') as hard_questions,
-    (SELECT COUNT(*) FROM paths) as total_paths,
+    (SELECT COUNT(*) FROM learning_paths) as total_paths,
     (SELECT COUNT(DISTINCT tag) FROM question_tags) as unique_tags;
 "
 
