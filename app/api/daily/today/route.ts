@@ -30,93 +30,19 @@ export async function GET(request: NextRequest) {
     const user_id = typeof userAuth === "string" ? userAuth : userAuth.user_id;
     const today = new Date().toISOString().split("T")[0];
 
-    // Check if user already has questions for today in daily_recommendations
-    const existingDailyPath = await query<{ question_id: string }>(
-      `SELECT DISTINCT question_id FROM daily_recommendations
-       WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new' AND path_id IS NOT NULL`,
+    // Check if user already has ANY recommendations for today (generated once per day)
+    const existingRecommendations = await query<{ count: string }>(
+      `SELECT COUNT(*) as count FROM daily_recommendations
+       WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new'`,
       [user_id, today]
     );
 
-    const existingPathQuestionIds = existingDailyPath.map(q => q.question_id);
+    const hasRecommendationsForToday = parseInt(existingRecommendations[0]?.count || "0") > 0;
 
-    // Round-robin selection: Get 1-2 questions from each enrolled path
-    const pathQuestions = await query<{
-      question_id: string;
-      title: string;
-      slug: string;
-      difficulty: string;
-      url: string;
-      leetcode_id: string;
-      path_id: string;
-      path_title: string;
-      order_index: number;
-    }>(
-      `
-      WITH user_paths AS (
-        SELECT path_id FROM user_path_enrollments
-        WHERE user_id = $1 AND is_active = true
-      ),
-      completed_questions AS (
-        SELECT question_id, path_id FROM user_question_progress
-        WHERE user_id = $1 AND status = 'completed'
-      ),
-      todays_recommendations AS (
-        SELECT question_id FROM daily_recommendations
-        WHERE user_id = $1 AND date = $2 AND recommendation_type = 'new' AND path_id IS NOT NULL
-      ),
-      ranked_questions AS (
-        SELECT
-          q.id as question_id,
-          q.title,
-          q.slug,
-          q.difficulty,
-          q.url,
-          q.leetcode_id,
-          pq.path_id,
-          lp.title as path_title,
-          pq.order_index,
-          ROW_NUMBER() OVER (PARTITION BY pq.path_id ORDER BY pq.order_index) as row_num
-        FROM user_paths up
-        JOIN learning_paths lp ON up.path_id = lp.id
-        JOIN path_questions pq ON pq.path_id = lp.id
-        JOIN questions q ON pq.question_id = q.id
-        LEFT JOIN completed_questions cq ON cq.question_id = q.id AND cq.path_id = pq.path_id
-        LEFT JOIN todays_recommendations tr ON tr.question_id = q.id
-        WHERE cq.question_id IS NULL AND tr.question_id IS NULL
-      )
-      SELECT
-        question_id,
-        title,
-        slug,
-        difficulty,
-        url,
-        leetcode_id,
-        path_id,
-        path_title,
-        order_index
-      FROM ranked_questions
-      WHERE row_num <= 2
-      ORDER BY path_id, order_index
-    `,
-      [user_id, today],
-    );
-
-    // If we got new path questions, save them to daily_recommendations
-    if (pathQuestions.length > 0) {
-      for (const q of pathQuestions) {
-        await query(
-          `INSERT INTO daily_recommendations (user_id, date, question_id, path_id, recommendation_type, priority_score, is_completed)
-           VALUES ($1, $2, $3, $4, 'new', 1.0, false)
-           ON CONFLICT (user_id, date, question_id, recommendation_type) DO NOTHING`,
-          [user_id, today, q.question_id, q.path_id]
-        );
-      }
-    }
-
-    // If we already had path questions for today but they've been completed, fetch them
-    let displayPathQuestions = pathQuestions;
-    if (pathQuestions.length === 0 && existingPathQuestionIds.length > 0) {
-      displayPathQuestions = await query<{
+    // If no recommendations exist for today, generate them (only happens once per day)
+    if (!hasRecommendationsForToday) {
+      // Generate path questions
+      const pathQuestions = await query<{
         question_id: string;
         title: string;
         slug: string;
@@ -127,24 +53,91 @@ export async function GET(request: NextRequest) {
         path_title: string;
         order_index: number;
       }>(
-        `SELECT
-          q.id as question_id,
-          q.title,
-          q.slug,
-          q.difficulty,
-          q.url,
-          q.leetcode_id,
-          dr.path_id,
-          lp.title as path_title,
-          0 as order_index
-        FROM daily_recommendations dr
-        JOIN questions q ON dr.question_id = q.id
-        LEFT JOIN learning_paths lp ON dr.path_id = lp.id
-        WHERE dr.user_id = $1 AND dr.date = $2 AND dr.is_completed = false AND dr.path_id IS NOT NULL
-        ORDER BY dr.created_at`,
-        [user_id, today]
+        `
+        WITH user_paths AS (
+          SELECT path_id FROM user_path_enrollments
+          WHERE user_id = $1 AND is_active = true
+        ),
+        completed_questions AS (
+          SELECT question_id, path_id FROM user_question_progress
+          WHERE user_id = $1 AND status = 'completed'
+        ),
+        ranked_questions AS (
+          SELECT
+            q.id as question_id,
+            q.title,
+            q.slug,
+            q.difficulty,
+            q.url,
+            q.leetcode_id,
+            pq.path_id,
+            lp.title as path_title,
+            pq.order_index,
+            ROW_NUMBER() OVER (PARTITION BY pq.path_id ORDER BY pq.order_index) as row_num
+          FROM user_paths up
+          JOIN learning_paths lp ON up.path_id = lp.id
+          JOIN path_questions pq ON pq.path_id = lp.id
+          JOIN questions q ON pq.question_id = q.id
+          LEFT JOIN completed_questions cq ON cq.question_id = q.id AND cq.path_id = pq.path_id
+          WHERE cq.question_id IS NULL
+        )
+        SELECT
+          question_id,
+          title,
+          slug,
+          difficulty,
+          url,
+          leetcode_id,
+          path_id,
+          path_title,
+          order_index
+        FROM ranked_questions
+        WHERE row_num <= 2
+        ORDER BY path_id, order_index
+      `,
+        [user_id],
       );
+
+      // Save path questions to daily_recommendations
+      for (const q of pathQuestions) {
+        await query(
+          `INSERT INTO daily_recommendations (user_id, date, question_id, path_id, recommendation_type, priority_score, is_completed)
+           VALUES ($1, $2, $3, $4, 'new', 1.0, false)
+           ON CONFLICT (user_id, date, question_id, recommendation_type) DO NOTHING`,
+          [user_id, today, q.question_id, q.path_id]
+        );
+      }
     }
+
+    // Fetch today's path questions (whether just generated or from earlier today)
+    const displayPathQuestions = await query<{
+      question_id: string;
+      title: string;
+      slug: string;
+      difficulty: string;
+      url: string;
+      leetcode_id: string;
+      path_id: string;
+      path_title: string;
+      order_index: number;
+    }>(
+      `SELECT
+        q.id as question_id,
+        q.title,
+        q.slug,
+        q.difficulty,
+        q.url,
+        q.leetcode_id,
+        dr.path_id,
+        lp.title as path_title,
+        0 as order_index
+      FROM daily_recommendations dr
+      JOIN questions q ON dr.question_id = q.id
+      LEFT JOIN learning_paths lp ON dr.path_id = lp.id
+      WHERE dr.user_id = $1 AND dr.date = $2 AND dr.is_completed = false AND dr.path_id IS NOT NULL
+      ORDER BY dr.created_at`,
+      [user_id, today]
+    );
 
     const reviewQuestions = await query<{
       question_id: string;
@@ -212,7 +205,7 @@ export async function GET(request: NextRequest) {
     );
 
     const allQuestionIds = [
-      ...pathQuestions.map((q) => q.question_id),
+      ...displayPathQuestions.map((q) => q.question_id),
       ...reviewQuestions.map((q) => q.question_id),
       ...dailyQuestions.map((q) => q.question_id),
     ];
