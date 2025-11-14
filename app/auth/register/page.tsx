@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
+import Navbar from "@/app/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -152,24 +153,7 @@ export default function RegisterPage() {
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>
-      {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-light text-gray-900">
-              LeetTrack
-            </Link>
-            <div className="flex gap-4">
-              <Link
-                href="/auth/login"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Registration Form */}
       <div className="flex items-center justify-center py-12 px-4">

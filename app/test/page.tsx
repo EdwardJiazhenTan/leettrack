@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import Navbar from "@/app/Navbar";
+import { useAuth } from "@/lib/useAuth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -77,6 +78,7 @@ const TIME_LIMIT_MINUTES = 25;
 
 export default function TestPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth({ redirectIfNotAuth: true });
   const [testState, setTestState] = useState<TestState>("topic-selection");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -87,39 +89,8 @@ export default function TestPage() {
   const [timeRemaining, setTimeRemaining] = useState(TIME_LIMIT_MINUTES * 60);
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [checkingSubmission, setCheckingSubmission] = useState(false);
-  const [leetcodeUsername, setLeetcodeUsername] = useState<string>("");
 
-  // Fetch user's LeetCode username
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/auth/login");
-          return;
-        }
-
-        const response = await fetch("/api/user/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.user.leetcode_username) {
-            setLeetcodeUsername(data.user.leetcode_username);
-          } else {
-            setError(
-              "Please set your LeetCode username in settings before taking a test."
-            );
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching user info:", err);
-      }
-    };
-
-    fetchUserInfo();
-  }, [router]);
+  const leetcodeUsername = user?.leetcode_username || "";
 
   // Timer countdown
   useEffect(() => {
@@ -278,6 +249,14 @@ export default function TestPage() {
   };
 
   const totalScore = scores.filter((s) => s).length;
+
+  if (authLoading) {
+    return (
+      <div className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}>
+        <div className="animate-pulse text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={`${inter.className} min-h-screen bg-gray-50`}>

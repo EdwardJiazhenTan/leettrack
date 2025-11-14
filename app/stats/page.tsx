@@ -5,57 +5,37 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import Navbar from "@/app/Navbar";
+import { useAuth } from "@/lib/useAuth";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function StatsRedirect() {
   const router = useRouter();
+  const { isAuthenticated, isLoading, user } = useAuth({ redirectIfNotAuth: true });
   const [error, setError] = useState<string | null>(null);
-  const [needsUsername, setNeedsUsername] = useState(false);
 
   useEffect(() => {
-    const fetchAndRedirect = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          router.push("/auth/login");
-          return;
-        }
+    if (isLoading || !isAuthenticated) return;
 
-        const response = await fetch("/api/user/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    const username = user?.leetcode_username;
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            const username = data.user.leetcode_username;
+    if (username) {
+      router.push(`/stats/${username}`);
+    }
+  }, [isLoading, isAuthenticated, user, router]);
 
-            if (!username) {
-              // User hasn't set their LeetCode username yet
-              setNeedsUsername(true);
-              return;
-            }
+  if (isLoading) {
+    return (
+      <div className={`${inter.className} min-h-screen bg-gray-50`}>
+        <Navbar />
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-pulse text-gray-600">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
-            router.push(`/stats/${username}`);
-          } else {
-            setError("Failed to fetch user information");
-          }
-        } else if (response.status === 401) {
-          router.push("/auth/login");
-        } else {
-          setError("Failed to fetch user information");
-        }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-        setError("An error occurred while loading stats");
-      }
-    };
-
-    fetchAndRedirect();
-  }, [router]);
-
-  if (needsUsername) {
+  if (!user?.leetcode_username) {
     return (
       <div className={`${inter.className} min-h-screen bg-gray-50`}>
         <Navbar />
@@ -69,9 +49,12 @@ export default function StatsRedirect() {
               Please update your profile with your actual LeetCode username to
               view your stats.
             </p>
-            <div className="text-sm text-gray-500">
-              You can update your LeetCode username in your profile settings.
-            </div>
+            <Link
+              href="/settings"
+              className="inline-block px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Go to Settings
+            </Link>
           </div>
         </div>
       </div>
@@ -86,7 +69,7 @@ export default function StatsRedirect() {
         <div className="bg-white border border-gray-200 rounded-lg p-8 text-center max-w-md">
           <p className="text-red-600 mb-4">{error}</p>
           <Link
-            href="/home"
+            href="/today"
             className="inline-block px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
             Back to Home

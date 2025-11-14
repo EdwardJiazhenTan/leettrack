@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import Navbar from "@/app/Navbar";
+import { useAuth } from "@/lib/useAuth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,71 +31,70 @@ export default function HomePage() {
   const [date, setDate] = useState("");
   const [breakdown, setBreakdown] = useState({ path: 0, review: 0, daily: 0 });
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [username, setUsername] = useState<string>("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
   useEffect(() => {
-    fetchUserInfo();
-    fetchTodaysQuestions();
-  }, []);
-
-
-  const fetchUserInfo = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await fetch("/api/user/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUsername(data.user.leetcode_username || data.user.username);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
+    if (!authLoading) {
+      fetchTodaysQuestions();
     }
-  };
+  }, [authLoading, isAuthenticated]);
 
   const fetchTodaysQuestions = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.push("/auth/login");
-        return;
-      }
+      if (!isAuthenticated) {
+        // fetch only daily questions
+        const response = await fetch("/api/leetcode/daily");
+        if (response.ok) {
+          const data = await response.json();
+          const challenge = data.data.activeDailyCodingChallengeQuestion;
+          const dailyQuestion: Question = {
+            id: challenge.question.frontendQuestionId,
+            title: challenge.question.title,
+            slug: challenge.question.titleSlug,
+            difficulty: challenge.question.difficulty,
+            url: `https://leetcode.com${challenge.link}`,
+            leetcode_id: challenge.question.frontendQuestionId,
+            tags: challenge.question.topicTags?.map((t: any) => t.name) || [],
+            source_type: "daily",
+            priority_score: 1.0,
+          };
 
-      // First, sync today's daily challenge from LeetCode
-      await fetch("/api/daily/sync", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }).catch((err) => console.warn("Failed to sync daily challenge:", err));
+          setQuestions([dailyQuestion]);
+          setDate(new Date().toISOString().split('T')[0]);
+          // manually set the breakdown count
+          setBreakdown({ path: 0, review: 0, daily: 1 })
+        }
+      } else {
+        // authenticated, fetch personalized questions
+        const token = localStorage.getItem("token");
 
-      // Then fetch all today's questions
-      // TODO: if not loggedin, dot show this
-      const response = await fetch("/api/daily/today", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        await fetch("/api/daily/sync", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }).catch((err) => console.warn("failed to sync daily challenges", err));
 
-      // TODO: even if not login, we still want to show the daily question and a sign to remind login
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        router.push("/auth/login");
-        return;
-      }
+        // fetch all todays questions
+        const response = await fetch("/api/daily/today", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        });
 
-      const data = await response.json();
-      if (data.success) {
-        setQuestions(data.questions);
-        setDate(data.date);
-        setBreakdown(data.breakdown);
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/auth/login");
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          setQuestions(data.questions);
+          setDate(data.date);
+          setBreakdown(data.breakdown);
+        }
       }
     } catch (error) {
       // TODO: create an error page to handle errors instead of a console error
@@ -215,7 +215,7 @@ export default function HomePage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div
         className={`${inter.className} min-h-screen bg-gray-50 flex items-center justify-center`}
@@ -245,27 +245,63 @@ export default function HomePage() {
           </p>
         </div>
 
+
+        {/* Login prompt for unauthenticated users */}
+        {!isAuthenticated && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-900 font-medium mb-2">
+              Want personalized path questions and track your progress?
+            </p>
+            <p className="text-blue-700 text-sm mb-3">
+              Sign up to get daily recommendations from your learning paths, spaced repetition reviews, and progress tracking.
+            </p>
+            <Link
+              href="/auth/login"
+              className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Sign In / Sign Up
+            </Link>
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-light text-gray-900">
-              {breakdown.path}
+        {isAuthenticated ? (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-light text-gray-900">
+                {breakdown.path}
+              </div>
+              <div className="text-sm text-gray-500">from paths</div>
             </div>
-            <div className="text-sm text-gray-500">from paths</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-light text-gray-900">
-              {breakdown.review}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-light text-gray-900">
+                {breakdown.review}
+              </div>
+              <div className="text-sm text-gray-500">reviews</div>
             </div>
-            <div className="text-sm text-gray-500">reviews</div>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-light text-gray-900">
-              {breakdown.daily}
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-light text-gray-900">
+                {breakdown.daily}
+              </div>
+              <div className="text-sm text-gray-500">daily</div>
             </div>
-            <div className="text-sm text-gray-500">daily</div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 opacity-60">
+              <div className="text-2xl font-light text-gray-500">🔒</div>
+              <div className="text-sm text-gray-500">from paths</div>
+            </div>
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 opacity-60">
+              <div className="text-2xl font-light text-gray-500">🔒</div>
+              <div className="text-sm text-gray-500">reviews</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="text-2xl font-light text-gray-900">1</div>
+              <div className="text-sm text-gray-500">daily</div>
+            </div>
+          </div>
+        )}
 
         {questions.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
@@ -327,22 +363,31 @@ export default function HomePage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleComplete(question)}
-                      disabled={processingId === question.id}
-                      className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  {isAuthenticated ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleComplete(question)}
+                        disabled={processingId === question.id}
+                        className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {processingId === question.id ? "..." : "Complete"}
+                      </button>
+                      <button
+                        onClick={() => handleReview(question)}
+                        disabled={processingId === question.id}
+                        className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {processingId === question.id ? "..." : "Review"}
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/auth/login"
+                      className="px-4 py-2 bg-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-300 transition-colors inline-block"
                     >
-                      {processingId === question.id ? "..." : "Complete"}
-                    </button>
-                    <button
-                      onClick={() => handleReview(question)}
-                      disabled={processingId === question.id}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {processingId === question.id ? "..." : "Review"}
-                    </button>
-                  </div>
+                      Login to Track
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
@@ -350,7 +395,7 @@ export default function HomePage() {
         )}
 
         {/* Load More Path Questions Button */}
-        {questions.length > 0 && (
+        {isAuthenticated && questions.length > 0 && (
           <div className="mt-6 text-center">
             <button
               onClick={handleLoadMorePath}
